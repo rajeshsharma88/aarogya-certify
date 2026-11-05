@@ -21,7 +21,11 @@ COPY . .
 # never become an empty ENV, because that would shadow configuration the build
 # platform already supplies its own way (Coolify, for example, injects a .env
 # into the build context) and silently downgrade the app to the local backend.
-ARG VITE_DATA_BACKEND
+# Defaults to supabase because the production deployment relies on this default
+# rather than passing the value explicitly. Safe everywhere else: without a URL
+# and anon key, createProvider() logs a warning and falls back to the local
+# browser backend, exactly as an unset value would.
+ARG VITE_DATA_BACKEND=supabase
 ARG VITE_SUPABASE_URL
 ARG VITE_SUPABASE_ANON_KEY
 ARG VITE_RAZORPAY_KEY_ID
