@@ -41,6 +41,11 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
     const savedLanguage = getPreferredLanguage();
     setLanguageState(savedLanguage);
     setTranslations(getTranslations(savedLanguage));
+    // Must be set on restore, not only in setLanguage(): a visitor landing
+    // directly on a Hindi page never calls setLanguage, so without this the
+    // document stays lang="en" and screen readers read Devanagari with an
+    // English voice, while search engines index the page as English.
+    document.documentElement.lang = savedLanguage;
     setIsLoading(false);
   }, []);
 

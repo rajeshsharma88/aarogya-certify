@@ -145,6 +145,30 @@ export interface Translations {
   english: string;
   hindi: string;
   selectLanguage: string;
+
+  // Layout — header & footer chrome
+  navGetCertified: string;
+  navGreeting: string;
+  navToggle: string;
+  navPrimary: string;
+  navVerify: string;
+  navSignIn: string;
+  navSignOut: string;
+  navCreateAccount: string;
+  footerHowItWorks: string;
+  navAdmin: string;
+  footerTagline: string;
+  footerPlatform: string;
+  footerDirectory: string;
+  footerTrust: string;
+  footerStep1: string;
+  footerStep2: string;
+  footerStep3: string;
+  footerTrust1: string;
+  footerTrust2: string;
+  footerTrust3: string;
+  footerLegal: string;
+  localBackendNotice: string;
 }
 
 export const EN_TRANSLATIONS: Translations = {
@@ -290,6 +314,33 @@ export const EN_TRANSLATIONS: Translations = {
   english: 'English',
   hindi: 'हिंदी',
   selectLanguage: 'Select Language',
+
+  // Layout — header & footer chrome
+  navGetCertified: 'Get certified',
+  navGreeting: 'Hi',
+  navToggle: 'Toggle navigation',
+  navPrimary: 'Primary',
+  navVerify: 'Verify a certificate',
+  navSignIn: 'Sign in',
+  navSignOut: 'Sign out',
+  navCreateAccount: 'Create account',
+  footerHowItWorks: 'How it works',
+  navAdmin: 'Admin',
+  footerTagline:
+    'Free, objective skill assessments with verifiable digital certificates for learners across India.',
+  footerPlatform: 'Platform',
+  footerDirectory: 'Certification directory',
+  footerTrust: 'Trust',
+  footerStep1: 'Choose a skill',
+  footerStep2: 'Take the timed assessment',
+  footerStep3: 'Earn a verifiable certificate',
+  footerTrust1: 'Scoring computed server-side',
+  footerTrust2: 'Unique, non-guessable certificate IDs',
+  footerTrust3: 'Public verification, no login needed',
+  footerLegal:
+    'Certificates are issued for skill demonstration and are not a government or university qualification.',
+  localBackendNotice:
+    'Local demo backend — data is stored in your browser. Configure Supabase to use the hosted database.',
 };
 
 export const HI_TRANSLATIONS: Translations = {
@@ -435,4 +486,31 @@ export const HI_TRANSLATIONS: Translations = {
   english: 'English',
   hindi: 'हिंदी',
   selectLanguage: 'भाषा चुनें',
+
+  // Layout — header & footer chrome
+  navGetCertified: 'प्रमाणित बनें',
+  navGreeting: 'नमस्ते',
+  navToggle: 'नेविगेशन खोलें या बंद करें',
+  navPrimary: 'मुख्य',
+  navVerify: 'प्रमाणपत्र सत्यापित करें',
+  navSignIn: 'साइन इन करें',
+  navSignOut: 'साइन आउट करें',
+  navCreateAccount: 'खाता बनाएँ',
+  footerHowItWorks: 'यह कैसे काम करता है',
+  navAdmin: 'प्रशासन',
+  footerTagline:
+    'पूरे भारत के शिक्षार्थियों के लिए नि:शुल्क, वस्तुनिष्ठ कौशल आकलन और सत्यापन-योग्य डिजिटल प्रमाणपत्र।',
+  footerPlatform: 'प्लेटफ़ॉर्म',
+  footerDirectory: 'प्रमाणपत्र निर्देशिका',
+  footerTrust: 'विश्वास',
+  footerStep1: 'एक कौशल चुनें',
+  footerStep2: 'समयबद्ध आकलन दें',
+  footerStep3: 'सत्यापन-योग्य प्रमाणपत्र पाएँ',
+  footerTrust1: 'मूल्यांकन सर्वर पर किया जाता है',
+  footerTrust2: 'विशिष्ट, अनुमान-रहित प्रमाणपत्र आईडी',
+  footerTrust3: 'सार्वजनिक सत्यापन, लॉगिन की आवश्यकता नहीं',
+  footerLegal:
+    'प्रमाणपत्र कौशल प्रदर्शन के लिए जारी किए जाते हैं और ये किसी सरकारी या विश्वविद्यालय की योग्यता नहीं हैं।',
+  localBackendNotice:
+    'स्थानीय डेमो बैकएंड — डेटा आपके ब्राउज़र में संग्रहीत है। होस्टेड डेटाबेस उपयोग करने के लिए Supabase कॉन्फ़िगर करें।',
 };

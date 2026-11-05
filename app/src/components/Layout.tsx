@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { LogoWordmark } from '../brand/Logo';
 import { useAuth } from '../context/AuthContext';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { useLanguage } from '../hooks/useLanguage';
 import { usingLocalBackend } from '../data';
 
 const navLink = ({ isActive }: { isActive: boolean }) =>
@@ -12,6 +13,7 @@ const navLink = ({ isActive }: { isActive: boolean }) =>
 
 export function Layout() {
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -25,7 +27,7 @@ export function Layout() {
     <div className="flex min-h-screen flex-col">
       {usingLocalBackend && (
         <div className="bg-saffron-100 text-center text-xs font-medium text-saffron-700">
-          Local demo backend — data is stored in your browser. Configure Supabase to use the hosted database.
+          {t('localBackendNotice')}
         </div>
       )}
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
@@ -34,21 +36,21 @@ export function Layout() {
             <LogoWordmark />
           </Link>
 
-          <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
+          <nav className="hidden items-center gap-1 md:flex" aria-label={t('navPrimary')}>
             <NavLink to="/certifications" className={navLink}>
-              Certifications
+              {t('certifications')}
             </NavLink>
             <NavLink to="/verify" className={navLink}>
-              Verify a certificate
+              {t('navVerify')}
             </NavLink>
             {user && (
               <NavLink to="/dashboard" className={navLink}>
-                Dashboard
+                {t('dashboard')}
               </NavLink>
             )}
             {user?.role === 'admin' && (
               <NavLink to="/admin" className={navLink}>
-                Admin
+                {t('navAdmin')}
               </NavLink>
             )}
           </nav>
@@ -57,18 +59,20 @@ export function Layout() {
             <LanguageSwitcher variant="button" compact />
             {user ? (
               <>
-                <span className="text-sm text-slate-600">Hi, {user.fullName.split(' ')[0]}</span>
+                <span className="text-sm text-slate-600">
+                  {t('navGreeting')}, {user.fullName.split(' ')[0]}
+                </span>
                 <button type="button" className="btn-outline" onClick={handleLogout}>
-                  Sign out
+                  {t('navSignOut')}
                 </button>
               </>
             ) : (
               <>
                 <Link to="/login" className="btn-ghost">
-                  Sign in
+                  {t('navSignIn')}
                 </Link>
                 <Link to="/certifications" className="btn-primary">
-                  Get certified
+                  {t('navGetCertified')}
                 </Link>
               </>
             )}
@@ -78,7 +82,7 @@ export function Layout() {
             type="button"
             className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 md:hidden"
             aria-expanded={menuOpen}
-            aria-label="Toggle navigation"
+            aria-label={t('navToggle')}
             onClick={() => setMenuOpen((v) => !v)}
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -91,19 +95,19 @@ export function Layout() {
           <div className="border-t border-slate-200 bg-white md:hidden">
             <div className="container-page flex flex-col gap-1 py-3">
               <Link to="/certifications" className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700" onClick={() => setMenuOpen(false)}>
-                Certifications
+                {t('certifications')}
               </Link>
               <Link to="/verify" className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700" onClick={() => setMenuOpen(false)}>
-                Verify a certificate
+                {t('navVerify')}
               </Link>
               {user && (
                 <Link to="/dashboard" className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700" onClick={() => setMenuOpen(false)}>
-                  Dashboard
+                  {t('dashboard')}
                 </Link>
               )}
               {user?.role === 'admin' && (
                 <Link to="/admin" className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700" onClick={() => setMenuOpen(false)}>
-                  Admin
+                  {t('navAdmin')}
                 </Link>
               )}
               <div className="mt-2 flex flex-col gap-2 border-t border-slate-200 pt-3">
@@ -112,15 +116,15 @@ export function Layout() {
                 </div>
                 {user ? (
                   <button type="button" className="btn-outline" onClick={handleLogout}>
-                    Sign out
+                    {t('navSignOut')}
                   </button>
                 ) : (
                   <>
                     <Link to="/login" className="btn-outline text-center" onClick={() => setMenuOpen(false)}>
-                      Sign in
+                      {t('navSignIn')}
                     </Link>
                     <Link to="/register" className="btn-primary text-center" onClick={() => setMenuOpen(false)}>
-                      Create account
+                      {t('navCreateAccount')}
                     </Link>
                   </>
                 )}
@@ -138,39 +142,36 @@ export function Layout() {
         <div className="container-page grid gap-8 py-12 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <LogoWordmark />
-            <p className="mt-3 max-w-xs text-sm text-slate-600">
-              Free, objective skill assessments with verifiable digital certificates for learners across India.
-            </p>
+            <p className="mt-3 max-w-xs text-sm text-slate-600">{t('footerTagline')}</p>
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-ink">Platform</h3>
+            <h3 className="text-sm font-semibold text-ink">{t('footerPlatform')}</h3>
             <ul className="mt-3 space-y-2 text-sm text-slate-600">
-              <li><Link className="hover:text-brand-700" to="/certifications">Certification directory</Link></li>
-              <li><Link className="hover:text-brand-700" to="/verify">Verify a certificate</Link></li>
-              <li><Link className="hover:text-brand-700" to="/dashboard">My dashboard</Link></li>
+              <li><Link className="hover:text-brand-700" to="/certifications">{t('footerDirectory')}</Link></li>
+              <li><Link className="hover:text-brand-700" to="/verify">{t('navVerify')}</Link></li>
+              <li><Link className="hover:text-brand-700" to="/dashboard">{t('myDashboard')}</Link></li>
             </ul>
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-ink">How it works</h3>
+            <h3 className="text-sm font-semibold text-ink">{t('footerHowItWorks')}</h3>
             <ul className="mt-3 space-y-2 text-sm text-slate-600">
-              <li>Choose a skill</li>
-              <li>Take the timed assessment</li>
-              <li>Earn a verifiable certificate</li>
+              <li>{t('footerStep1')}</li>
+              <li>{t('footerStep2')}</li>
+              <li>{t('footerStep3')}</li>
             </ul>
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-ink">Trust</h3>
+            <h3 className="text-sm font-semibold text-ink">{t('footerTrust')}</h3>
             <ul className="mt-3 space-y-2 text-sm text-slate-600">
-              <li>Scoring computed server-side</li>
-              <li>Unique, non-guessable certificate IDs</li>
-              <li>Public verification, no login needed</li>
+              <li>{t('footerTrust1')}</li>
+              <li>{t('footerTrust2')}</li>
+              <li>{t('footerTrust3')}</li>
             </ul>
           </div>
         </div>
         <div className="border-t border-slate-200 py-5">
           <p className="container-page text-xs text-slate-500">
-            © {new Date().getFullYear()} Aarogya India. Certificates are issued for skill demonstration and are not a
-            government or university qualification.
+            © {new Date().getFullYear()} {t('appName')}. {t('footerLegal')}
           </p>
         </div>
       </footer>

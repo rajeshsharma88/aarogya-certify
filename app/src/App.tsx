@@ -3,6 +3,7 @@ import { Layout } from './components/Layout';
 import { Home } from './pages/Home';
 import { Directory } from './pages/Directory';
 import { CertificationDetail } from './pages/CertificationDetail';
+import { PanchkarmaLanding } from './pages/PanchkarmaLanding';
 import { AssessmentStart } from './pages/AssessmentStart';
 import { Assessment } from './pages/Assessment';
 import { Results } from './pages/Results';
@@ -33,6 +34,10 @@ export default function App() {
         <Route index element={<Home />} />
         <Route path="certifications" element={<Directory />} />
         <Route path="certifications/:slug" element={<CertificationDetail />} />
+
+        {/* Sales landing page. Declared before the catch-all so the marketing
+            slug stays independent of the catalog route above. */}
+        <Route path="panchkarma-therapy" element={<PanchkarmaLanding />} />
 
         <Route
           path="assess/:slug/start"

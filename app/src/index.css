@@ -19,6 +19,17 @@ body {
   margin: 0;
 }
 
+/*
+ * Devanagari needs more leading than Latin. Matras sit above and below the
+ * shirorekha, so at the tight line-heights used for display type they collide
+ * with the line above. Applied via the lang attribute, which LanguageContext
+ * keeps in sync, so every Hindi heading is covered without per-component
+ * conditionals.
+ */
+html[lang='hi'] :is(h1, h2, h3) {
+  line-height: 1.45;
+}
+
 @layer components {
   .container-page {
     @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
