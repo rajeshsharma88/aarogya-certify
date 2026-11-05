@@ -5,13 +5,19 @@ services:
     build:
       context: ./app
       dockerfile: Dockerfile
+      # VITE_* values belong here, not under `environment`. Vite inlines them
+      # into the JS bundle while building; the running container only serves
+      # already-built static files, so a runtime variable never reaches the app
+      # and the frontend silently falls back to the local browser backend.
+      args:
+        VITE_DATA_BACKEND: supabase
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
+        VITE_RAZORPAY_KEY_ID: ${VITE_RAZORPAY_KEY_ID}
+        VITE_LINKEDIN_CLIENT_ID: ${VITE_LINKEDIN_CLIENT_ID}
+        VITE_LOG_PAYMENTS: "true"
     ports:
       - "3000:3000"
     environment:
       NODE_ENV: production
-      VITE_DATA_BACKEND: supabase
-      VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
-      VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
-      VITE_RAZORPAY_KEY_ID: ${VITE_RAZORPAY_KEY_ID}
-      VITE_LOG_PAYMENTS: "true"
     restart: unless-stopped

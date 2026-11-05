@@ -12,6 +12,33 @@ RUN npm ci
 # Copy source code
 COPY . .
 
+# Frontend configuration must be present at BUILD time, not run time.
+# Vite replaces every `import.meta.env.VITE_*` with a literal while bundling, so
+# values supplied only as container environment variables arrive too late: the
+# bundle is already built and `serve` only hands out static files. Passing them
+# as build args (and promoting them to ENV so `npm run build` sees them) is what
+# actually gets them into the bundle.
+#
+# Defaults keep a plain `docker build` working with the self-contained browser
+# backend; override them to point at Supabase.
+ARG VITE_DATA_BACKEND=local
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
+ARG VITE_RAZORPAY_KEY_ID
+ARG VITE_LINKEDIN_CLIENT_ID
+ARG VITE_LOG_PAYMENTS
+
+ENV VITE_DATA_BACKEND=$VITE_DATA_BACKEND \
+    VITE_SUPABASE_URL=$VITE_SUPABASE_URL \
+    VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY \
+    VITE_RAZORPAY_KEY_ID=$VITE_RAZORPAY_KEY_ID \
+    VITE_LINKEDIN_CLIENT_ID=$VITE_LINKEDIN_CLIENT_ID \
+    VITE_LOG_PAYMENTS=$VITE_LOG_PAYMENTS
+
+# Anything inlined here ships inside the public JS bundle and is readable by
+# anyone who loads the site. Only ever pass the Supabase *anon* key, which is
+# designed to be public and constrained by RLS — never the service role key.
+
 # Build the app
 RUN npm run build
 

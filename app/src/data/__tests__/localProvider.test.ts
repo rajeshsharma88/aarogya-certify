@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { LocalProvider } from '../local/LocalProvider';
-import { QUESTIONS } from '../seed';
+import { CERTIFICATIONS, DOMAINS, QUESTIONS } from '../seed';
 
 async function newProvider() {
   localStorage.clear();
@@ -15,8 +15,10 @@ describe('catalog', () => {
     const p = await newProvider();
     const domains = await p.listDomains();
     const certs = await p.listCertifications();
-    expect(domains.length).toBe(8);
-    expect(certs.length).toBeGreaterThanOrEqual(20);
+    // Derived from the seed so adding a domain or certification does not
+    // require editing this assertion.
+    expect(domains.length).toBe(DOMAINS.filter((d) => d.isActive).length);
+    expect(certs.length).toBe(CERTIFICATIONS.filter((c) => c.isActive).length);
     expect(certs[0].title).toBeTruthy();
   });
 

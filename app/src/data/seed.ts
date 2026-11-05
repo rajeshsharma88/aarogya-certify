@@ -152,7 +152,7 @@ function buildBank(cert: Certification): Question[] {
       ['Identify the cause, correct it, and learn from it', true],
       ['Hide the error and move on', false],
       ['Blame the tools immediately', false],
-      ['Stop practicing ${t2} altogether', false],
+      [`Stop practicing ${t2} altogether`, false],
     ]),
     tf(cert, t3, `Continuous learning and staying current in ${t3} is important for long-term competence.`, true),
     mcq(cert, t0, `Which approach reflects ethical, professional conduct in ${t0}?`, [

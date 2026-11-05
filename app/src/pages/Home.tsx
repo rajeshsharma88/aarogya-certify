@@ -92,8 +92,9 @@ export function Home() {
 
             <dl className="mx-auto mt-12 grid max-w-2xl grid-cols-2 gap-6 sm:grid-cols-4">
               {[
-                ['8', 'Domains'],
-                ['24', 'Certifications'],
+                // Derived from the catalog so these never drift from reality.
+                [domains ? String(domains.length) : '—', 'Domains'],
+                [certs ? String(certs.length) : '—', 'Certifications'],
                 ['100%', 'Free'],
                 ['Instant', 'Certificates'],
               ].map(([value, label]) => (
