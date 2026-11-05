@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { provider } from '../data';
 import { useAsync } from '../hooks/useAsync';
 import { useLanguage } from '../hooks/useLanguage';
+import { verifyPageQrDataUrl } from '../modules/certificate/qr';
 import type { Language } from '../types';
 
 /**
@@ -78,6 +80,10 @@ interface Copy {
   certTitle: string;
   certIdLabel: string;
   certCaption: string;
+  certSample: string;
+  certScoreLabel: string;
+  certIssuedLabel: string;
+  certVerifyHint: string;
 
   pricingEyebrow: string;
   pricingTitle: string;
@@ -199,7 +205,11 @@ const COPY: Record<Language, Copy> = {
     certForPassing: 'For passing',
     certTitle: 'Panchkarma Therapy Fundamentals',
     certIdLabel: 'Certificate ID',
-    certCaption: 'Representative layout. Your issued certificate carries a real ID and working QR code.',
+    certCaption: 'Sample layout. Your issued certificate carries your name, your score and a unique ID.',
+    certSample: 'Sample',
+    certScoreLabel: 'Score',
+    certIssuedLabel: 'Issued',
+    certVerifyHint: 'Scan to open the public verification page',
 
     pricingEyebrow: 'Pricing',
     pricingTitle: 'Take it free. Pay only for the certificate.',
@@ -368,7 +378,11 @@ const COPY: Record<Language, Copy> = {
     certForPassing: 'उत्तीर्ण करने हेतु',
     certTitle: 'पंचकर्म चिकित्सा मौलिकताएं',
     certIdLabel: 'प्रमाणपत्र आईडी',
-    certCaption: 'प्रतीकात्मक प्रारूप। आपके जारी प्रमाणपत्र पर वास्तविक आईडी और कार्यशील QR कोड होगा।',
+    certCaption: 'नमूना प्रारूप। आपके जारी प्रमाणपत्र पर आपका नाम, आपके अंक और एक विशिष्ट आईडी होगी।',
+    certSample: 'नमूना',
+    certScoreLabel: 'अंक',
+    certIssuedLabel: 'जारी',
+    certVerifyHint: 'सार्वजनिक सत्यापन पृष्ठ खोलने के लिए स्कैन करें',
 
     pricingEyebrow: 'मूल्य',
     pricingTitle: 'आकलन नि:शुल्क। भुगतान केवल प्रमाणपत्र के लिए।',
@@ -470,6 +484,19 @@ export function PanchkarmaLanding() {
   const c = COPY[language] ?? COPY.en;
 
   const { data: cert } = useAsync(() => provider.getCertificationBySlug(SLUG, language), [language]);
+
+  // Real QR for the sample certificate — it resolves to the live verification
+  // page, so the mechanism the page is selling can actually be tried.
+  const [qr, setQr] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    verifyPageQrDataUrl(240)
+      .then((url) => active && setQr(url))
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const minutes = cert ? Math.round(cert.durationSec / 60) : FACTS.minutes;
   const questions = cert?.questionCount ?? FACTS.questions;
@@ -606,27 +633,84 @@ export function PanchkarmaLanding() {
             </ul>
           </div>
 
-          {/* Certificate mock — representative, not a real issued certificate */}
-          <div className="rounded-2xl bg-gradient-to-br from-brand-900 to-brand-700 p-6 shadow-lift sm:p-8">
-            <div className="rounded-xl border-4 border-saffron-300/60 bg-white p-6 text-center sm:p-8">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-700">{c.certOrg}</p>
-              <p className="mt-4 font-display text-xl font-semibold text-ink sm:text-2xl">{c.certHeading}</p>
-              <p className="mt-5 text-xs uppercase tracking-wider text-slate-500">{c.certAwardedTo}</p>
-              <p className="font-display text-lg font-semibold text-brand-800">{c.certName}</p>
-              <p className="mt-4 text-xs uppercase tracking-wider text-slate-500">{c.certForPassing}</p>
-              <p className="font-semibold text-ink">{c.certTitle}</p>
+          {/* Sample certificate. Marked "Sample" so it is never mistaken for an
+              issued credential; the QR is real and opens the verification page. */}
+          <div>
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-saffron-300 via-saffron-400 to-saffron-200 p-[3px] shadow-lift">
+              <div className="relative overflow-hidden rounded-[14px] bg-gradient-to-br from-brand-950 via-brand-900 to-[#06302c] px-6 py-8 sm:px-9 sm:py-10">
+                {/* corner glow + guilloche-style rings */}
+                <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-saffron-400/15 blur-3xl" />
+                <div className="pointer-events-none absolute -bottom-24 -left-16 h-56 w-56 rounded-full bg-brand-400/10 blur-3xl" />
 
-              <div className="mt-6 flex items-end justify-between gap-4 border-t border-slate-200 pt-4 text-left">
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider text-slate-500">{c.certIdLabel}</p>
-                  <p className="font-mono text-[11px] font-semibold text-ink">AIC-••••-••••-••••</p>
+                <span className="absolute right-4 top-4 rounded-full border border-saffron-300/40 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-saffron-200/90">
+                  {c.certSample}
+                </span>
+
+                <div className="relative text-center">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-saffron-200/80">
+                    {c.certOrg}
+                  </p>
+
+                  {/* seal */}
+                  <div className="mx-auto mt-6 grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-saffron-200 to-saffron-500 shadow-[0_0_0_4px_rgba(253,230,138,0.14)]">
+                    <span className="grid h-[52px] w-[52px] place-items-center rounded-full border border-saffron-700/30 text-2xl" aria-hidden>
+                      🌿
+                    </span>
+                  </div>
+
+                  <h3 className="mt-5 bg-gradient-to-b from-saffron-100 to-saffron-400 bg-clip-text font-display text-2xl font-semibold uppercase tracking-wide text-transparent sm:text-3xl">
+                    {c.certHeading}
+                  </h3>
+
+                  <p className="mt-6 text-[10px] uppercase tracking-[0.2em] text-brand-200/70">
+                    {c.certAwardedTo}
+                  </p>
+                  <p className="mt-1 font-display text-2xl font-semibold text-white sm:text-3xl">{c.certName}</p>
+
+                  <div className="mx-auto mt-4 h-px w-24 bg-gradient-to-r from-transparent via-saffron-300/60 to-transparent" />
+
+                  <p className="mt-4 text-[10px] uppercase tracking-[0.2em] text-brand-200/70">
+                    {c.certForPassing}
+                  </p>
+                  <p className="mt-1 text-pretty font-semibold text-saffron-100">{c.certTitle}</p>
+
+                  <dl className="mt-5 flex items-center justify-center gap-7 text-center">
+                    <div>
+                      <dt className="text-[9px] uppercase tracking-[0.16em] text-brand-200/60">{c.certScoreLabel}</dt>
+                      <dd className="font-display text-base font-semibold text-white">{passScorePct}%+</dd>
+                    </div>
+                    <div className="h-7 w-px bg-white/10" />
+                    <div>
+                      <dt className="text-[9px] uppercase tracking-[0.16em] text-brand-200/60">{c.certIssuedLabel}</dt>
+                      <dd className="font-display text-base font-semibold text-white">
+                        {new Date().getFullYear()}
+                      </dd>
+                    </div>
+                  </dl>
                 </div>
-                <div className="grid h-12 w-12 shrink-0 place-items-center rounded border border-slate-300 bg-slate-50 text-[8px] font-semibold text-slate-400">
-                  QR
+
+                {/* footer: ID + real QR */}
+                <div className="relative mt-7 flex items-end justify-between gap-5 border-t border-white/10 pt-5">
+                  <div className="min-w-0">
+                    <p className="text-[9px] uppercase tracking-[0.16em] text-brand-200/60">{c.certIdLabel}</p>
+                    <p className="mt-0.5 font-mono text-xs font-semibold tracking-wider text-saffron-200">
+                      AIC-••••-••••-••••
+                    </p>
+                    <p className="mt-2 max-w-[190px] text-pretty text-[10px] leading-snug text-brand-200/60">
+                      {c.certVerifyHint}
+                    </p>
+                  </div>
+                  <div className="shrink-0 rounded-lg bg-white p-1.5 shadow-lg">
+                    {qr ? (
+                      <img src={qr} alt={c.certVerifyHint} className="h-[68px] w-[68px]" />
+                    ) : (
+                      <div className="h-[68px] w-[68px] animate-pulse rounded bg-slate-200" />
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-            <p className="mt-4 text-center text-xs text-brand-100">{c.certCaption}</p>
+            <p className="mt-4 text-center text-xs text-slate-500">{c.certCaption}</p>
           </div>
         </div>
       </section>
