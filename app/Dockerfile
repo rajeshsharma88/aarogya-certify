@@ -15,29 +15,33 @@ COPY . .
 # Frontend configuration must be present at BUILD time, not run time.
 # Vite replaces every `import.meta.env.VITE_*` with a literal while bundling, so
 # values supplied only as container environment variables arrive too late: the
-# bundle is already built and `serve` only hands out static files. Passing them
-# as build args (and promoting them to ENV so `npm run build` sees them) is what
-# actually gets them into the bundle.
+# bundle is already built and `serve` only hands out static files.
 #
-# Defaults keep a plain `docker build` working with the self-contained browser
-# backend; override them to point at Supabase.
-ARG VITE_DATA_BACKEND=local
+# Each arg is written to .env.production ONLY when non-empty. An unset arg must
+# never become an empty ENV, because that would shadow configuration the build
+# platform already supplies its own way (Coolify, for example, injects a .env
+# into the build context) and silently downgrade the app to the local backend.
+ARG VITE_DATA_BACKEND
 ARG VITE_SUPABASE_URL
 ARG VITE_SUPABASE_ANON_KEY
 ARG VITE_RAZORPAY_KEY_ID
 ARG VITE_LINKEDIN_CLIENT_ID
 ARG VITE_LOG_PAYMENTS
 
-ENV VITE_DATA_BACKEND=$VITE_DATA_BACKEND \
-    VITE_SUPABASE_URL=$VITE_SUPABASE_URL \
-    VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY \
-    VITE_RAZORPAY_KEY_ID=$VITE_RAZORPAY_KEY_ID \
-    VITE_LINKEDIN_CLIENT_ID=$VITE_LINKEDIN_CLIENT_ID \
-    VITE_LOG_PAYMENTS=$VITE_LOG_PAYMENTS
-
 # Anything inlined here ships inside the public JS bundle and is readable by
 # anyone who loads the site. Only ever pass the Supabase *anon* key, which is
 # designed to be public and constrained by RLS — never the service role key.
+RUN set -eu; \
+    for v in VITE_DATA_BACKEND VITE_SUPABASE_URL VITE_SUPABASE_ANON_KEY \
+             VITE_RAZORPAY_KEY_ID VITE_LINKEDIN_CLIENT_ID VITE_LOG_PAYMENTS; do \
+      eval "val=\${$v-}"; \
+      if [ -n "$val" ]; then echo "$v=$val" >> .env.production; fi; \
+    done; \
+    if [ -f .env.production ]; then \
+      echo 'Build-time VITE_* keys supplied as build args:'; cut -d= -f1 .env.production; \
+    else \
+      echo 'No VITE_* build args supplied; using .env from the build context, if any.'; \
+    fi
 
 # Build the app
 RUN npm run build

@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# Local env files — these hold keys and are inlined into the bundle at build
+# time, so they must never be committed. .env.example is the documented template.
+.env
+.env.*
+!.env.example
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
