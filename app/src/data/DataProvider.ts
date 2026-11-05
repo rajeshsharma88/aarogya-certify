@@ -6,6 +6,7 @@ import type {
   Currency,
   Domain,
   Language,
+  LinkedInShare,
   PaymentInvoice,
   PaymentOrder,
   Profile,
@@ -89,4 +90,18 @@ export interface DataProvider {
   downloadInvoicePdf(orderId: string): Promise<Blob>;
   /** Generate invoice HTML for email or preview. */
   generateInvoiceHtml(orderId: string): Promise<string>;
+
+  // linkedin (Phase 3: LinkedIn Integration)
+  /** Check if user has LinkedIn OAuth token. */
+  hasLinkedInToken(): Promise<boolean>;
+  /** Get LinkedIn OAuth authorization URL. */
+  getLinkedInAuthUrl(): string;
+  /** Handle LinkedIn OAuth callback with authorization code. */
+  handleLinkedInCallback(code: string, state: string): Promise<{ accessToken: string }>;
+  /** Share certificate to LinkedIn as UGC post with verified badge. */
+  shareToLinkedIn(certificateId: string, shareText: string): Promise<LinkedInShare>;
+  /** Get LinkedIn share history for a certificate. */
+  getLinkedInShares(certificateId: string): Promise<LinkedInShare[]>;
+  /** Revoke LinkedIn access token and clear stored credentials. */
+  revokeLinkedInAccess(): Promise<void>;
 }

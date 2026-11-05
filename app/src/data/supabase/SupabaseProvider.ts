@@ -5,6 +5,7 @@ import type {
   CatalogFilter,
   Currency,
   Domain,
+  LinkedInShare,
   PaymentInvoice,
   PaymentOrder,
   Profile,
@@ -419,6 +420,43 @@ export class SupabaseProvider implements DataProvider {
 
   async generateInvoiceHtml(_orderId: string): Promise<string> {
     // TODO: Implement once Supabase integration is complete
+    throw new Error('Not implemented in Supabase yet');
+  }
+
+  // Phase 3: LinkedIn Integration
+  async hasLinkedInToken(): Promise<boolean> {
+    // TODO: Check if user has valid LinkedIn token in database
+    throw new Error('Not implemented in Supabase yet');
+  }
+
+  getLinkedInAuthUrl(): string {
+    const params = new URLSearchParams({
+      client_id: import.meta.env.VITE_LINKEDIN_CLIENT_ID || 'demo-client-id',
+      redirect_uri: `${window.location.origin}/auth/linkedin/callback`,
+      response_type: 'code',
+      scope: 'profile w_member_social',
+      state: Math.random().toString(36).slice(2),
+    });
+    return `https://www.linkedin.com/oauth/v2/authorization?${params.toString()}`;
+  }
+
+  async handleLinkedInCallback(_code: string, _state: string): Promise<{ accessToken: string }> {
+    // TODO: Exchange auth code for access token via RPC
+    throw new Error('Not implemented in Supabase yet');
+  }
+
+  async shareToLinkedIn(_certificateId: string, _shareText: string): Promise<LinkedInShare> {
+    // TODO: Share to LinkedIn via RPC + LinkedIn UGC API
+    throw new Error('Not implemented in Supabase yet');
+  }
+
+  async getLinkedInShares(_certificateId: string): Promise<LinkedInShare[]> {
+    // TODO: Retrieve LinkedIn shares from database via RPC
+    throw new Error('Not implemented in Supabase yet');
+  }
+
+  async revokeLinkedInAccess(): Promise<void> {
+    // TODO: Revoke LinkedIn token via RPC
     throw new Error('Not implemented in Supabase yet');
   }
 }

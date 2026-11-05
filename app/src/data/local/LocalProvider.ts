@@ -6,6 +6,7 @@ import type {
   Currency,
   Domain,
   Language,
+  LinkedInShare,
   PaymentInvoice,
   PaymentOrder,
   Profile,
@@ -31,6 +32,8 @@ const K = {
   seeded: 'ac:seeded',
   paymentOrders: 'ac:payment_orders',
   paymentInvoices: 'ac:payment_invoices',
+  linkedinToken: 'ac:linkedin_token',
+  linkedinShares: 'ac:linkedin_shares',
 } as const;
 
 interface StoredUser extends Profile {
@@ -885,5 +888,96 @@ export class LocalProvider implements DataProvider {
     };
 
     return generateInvoiceHTML(invoiceData);
+  }
+
+  // -------------------------------------------------------- Phase 3: LinkedIn Integration
+
+  private linkedinShares(): LinkedInShare[] {
+    return read<LinkedInShare[]>(K.linkedinShares, []);
+  }
+
+  async hasLinkedInToken(): Promise<boolean> {
+    const token = read<{ accessToken: string; expiresAt: number } | null>(K.linkedinToken, null);
+    if (!token) return false;
+    // Check if token is still valid
+    return token.expiresAt > Date.now();
+  }
+
+  getLinkedInAuthUrl(): string {
+    // Mock LinkedIn auth URL for demo
+    const params = new URLSearchParams({
+      client_id: import.meta.env.VITE_LINKEDIN_CLIENT_ID || 'demo-client-id',
+      redirect_uri: `${window.location.origin}/auth/linkedin/callback`,
+      response_type: 'code',
+      scope: 'profile w_member_social',
+      state: Math.random().toString(36).slice(2),
+    });
+    return `https://www.linkedin.com/oauth/v2/authorization?${params.toString()}`;
+  }
+
+  async handleLinkedInCallback(code: string, _state: string): Promise<{ accessToken: string }> {
+    // Mock LinkedIn OAuth token exchange for demo
+    // In production, this would be a backend call to LinkedIn API
+    const mockToken = {
+      accessToken: `mock-token-${code.slice(0, 8)}`,
+      expiresAt: Date.now() + 3600000, // 1 hour
+      expiresIn: 3600,
+    };
+
+    write(K.linkedinToken, mockToken);
+    return { accessToken: mockToken.accessToken };
+  }
+
+  async shareToLinkedIn(certificateId: string, shareText: string): Promise<LinkedInShare> {
+    const user = await this.currentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const hasToken = await this.hasLinkedInToken();
+    if (!hasToken) throw new Error('LinkedIn not connected. Please authorize first.');
+
+    const cert = this.certificates().find((c) => c.id === certificateId && c.userId === user.id);
+    if (!cert) throw new Error('Certificate not found');
+
+    // Find associated payment order
+    const order = this.paymentOrders().find(
+      (o) => o.userId === user.id && o.certificateId === certificateId && o.status === 'completed'
+    );
+    if (!order) throw new Error('Certificate not purchased. Please buy the certificate first.');
+
+    // Create share record
+    const verificationUrl = `${window.location.origin}/verify/${cert.certificateNo}`;
+    const share: LinkedInShare = {
+      id: uid(),
+      certificateId,
+      orderId: order.id,
+      linkedinPostId: `mock-post-${Date.now()}`,
+      sharedAt: new Date().toISOString(),
+      shareText: `${shareText}\n\n${verificationUrl}`,
+      certificateBadgeUrl: `${window.location.origin}/api/badges/${cert.id}.png`,
+      verificationUrl,
+      createdAt: new Date().toISOString(),
+    };
+
+    const shares = this.linkedinShares();
+    shares.push(share);
+    write(K.linkedinShares, shares);
+
+    return share;
+  }
+
+  async getLinkedInShares(certificateId: string): Promise<LinkedInShare[]> {
+    const user = await this.currentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const cert = this.certificates().find((c) => c.id === certificateId && c.userId === user.id);
+    if (!cert) throw new Error('Certificate not found');
+
+    return this.linkedinShares()
+      .filter((s) => s.certificateId === certificateId)
+      .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+  }
+
+  async revokeLinkedInAccess(): Promise<void> {
+    write(K.linkedinToken, null);
   }
 }
