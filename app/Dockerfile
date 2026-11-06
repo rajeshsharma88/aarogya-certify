@@ -67,9 +67,24 @@ COPY package*.json ./
 # Expose port
 EXPOSE 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
+# Health check.
+#
+# This previously ran:
+#   node -e "require('http').get('http://localhost:3000', (r) => {...})"
+# which received its 200 and then hung: the response body was never consumed and
+# the process never exited, so Docker killed it at the timeout and reported
+# `Return code: -1` on every attempt. The container was serving correctly the
+# whole time — the deployment log showed `GET / Returned 200 in 3 ms` for each
+# probe — but Docker marked it unhealthy and Coolify rolled the deploy back.
+#
+# wget exits on its own and sets a status code, which is also what Coolify's
+# deploy warning asks for on Dockerfile-based deployments. busybox wget is part
+# of the alpine base image, so nothing extra is installed.
+#
+# `localhost` rather than 127.0.0.1 deliberately: the logged probes arrived from
+# ::1, so serve is answering over IPv6 here, and forcing IPv4 risks a refusal.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD wget -qO /dev/null http://localhost:3000/ || exit 1
 
 # Start the app
 CMD ["serve", "-s", "dist", "-l", "3000"]
