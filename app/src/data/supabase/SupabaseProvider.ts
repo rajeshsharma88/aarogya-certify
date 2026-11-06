@@ -16,6 +16,11 @@ import type {
 import type { DataProvider } from '../DataProvider';
 import { AuthError, parseAuthError } from '../authError';
 
+/** Removes the fragment without adding a history entry or reloading. */
+function clearHash(): void {
+  window.history.replaceState(null, '', window.location.pathname + window.location.search);
+}
+
 /**
  * Supabase adapter implementing the same DataProvider surface.
  *
@@ -165,6 +170,64 @@ export class SupabaseProvider implements DataProvider {
       /* ignore */
     }
     localStorage.removeItem(this.sessionKey);
+  }
+
+  // ------------------------------------------------------ password recovery
+  async requestPasswordReset(email: string): Promise<void> {
+    // redirect_to is where GoTrue sends the browser after it validates the
+    // emailed link. It must be listed in ADDITIONAL_REDIRECT_URLS on the server
+    // or GoTrue falls back to SITE_URL and the user lands on the home page.
+    const redirectTo = `${window.location.origin}/reset-password`;
+    await this.auth(`recover?redirect_to=${encodeURIComponent(redirectTo)}`, { email });
+  }
+
+  async consumeRecoveryFromUrl(): Promise<boolean> {
+    // GoTrue returns the grant in the URL fragment, never the query string, so
+    // the tokens are not sent to the server or written into logs.
+    const raw = window.location.hash.replace(/^#/, '');
+    if (!raw) return false;
+    const params = new URLSearchParams(raw);
+
+    const error = params.get('error_description') ?? params.get('error');
+    if (error) {
+      // Expired or already-used links arrive here rather than as a failed request.
+      clearHash();
+      throw new AuthError('unknown', 400, error);
+    }
+
+    const accessToken = params.get('access_token');
+    if (!accessToken || params.get('type') !== 'recovery') return false;
+
+    localStorage.setItem(
+      this.sessionKey,
+      JSON.stringify({
+        access_token: accessToken,
+        refresh_token: params.get('refresh_token') ?? '',
+        user: {},
+      }),
+    );
+    // Drop the tokens from the address bar so they are not kept in history or
+    // leaked through a Referer header.
+    clearHash();
+    return true;
+  }
+
+  async verifyRecoveryCode(email: string, code: string): Promise<void> {
+    const out = await this.auth('verify', { email, token: code.trim(), type: 'recovery' });
+    if (!out?.access_token) throw new AuthError('unknown', 400, 'verify returned no session');
+    localStorage.setItem(this.sessionKey, JSON.stringify(out));
+  }
+
+  async updatePassword(newPassword: string): Promise<void> {
+    if (!this.token()) throw new AuthError('unknown', 401, 'no recovery session');
+    const res = await fetch(`${this.url}/auth/v1/user`, {
+      method: 'PUT',
+      headers: { apikey: this.anonKey, 'Content-Type': 'application/json', Authorization: `Bearer ${this.token()}` },
+      body: JSON.stringify({ password: newPassword }),
+    }).catch((err) => {
+      throw new AuthError('network', 0, err instanceof Error ? err.message : String(err));
+    });
+    if (!res.ok) throw parseAuthError(res.status, await res.text().catch(() => ''));
   }
 
   async currentUser(): Promise<Profile | null> {

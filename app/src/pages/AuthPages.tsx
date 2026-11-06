@@ -123,6 +123,11 @@ export function Login() {
               {busy ? 'Signing in…' : 'Sign in'}
             </button>
           </form>
+          <p className="mt-4 text-center text-sm">
+            <Link to="/forgot-password" className="text-brand-700 hover:underline">
+              Forgot your password?
+            </Link>
+          </p>
           <p className="mt-5 text-center text-sm text-slate-600">
             New here?{' '}
             <Link

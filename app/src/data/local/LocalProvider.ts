@@ -28,6 +28,7 @@ const K = {
   results: 'ac:results',
   certificates: 'ac:certificates',
   session: 'ac:session',
+  recovery: 'ac:recovery',
   verifications: 'ac:verification_logs',
   seeded: 'ac:seeded',
   paymentOrders: 'ac:payment_orders',
@@ -240,6 +241,61 @@ export class LocalProvider implements DataProvider {
 
   async logout(): Promise<void> {
     localStorage.removeItem(K.session);
+  }
+
+  // ------------------------------------------------------ password recovery
+  //
+  // The local backend has no way to send email, so the code is written to the
+  // console instead. That is acceptable only because this backend keeps every
+  // user record in the visitor's own localStorage — there is nothing here that
+  // the visitor could not already read. The Supabase backend emails it.
+  async requestPasswordReset(email: string): Promise<void> {
+    const normalized = email.toLowerCase().trim();
+    const user = this.users().find((u) => u.email.toLowerCase() === normalized);
+    // Resolve either way: a different answer for unknown addresses would let
+    // anyone test which emails are registered.
+    if (!user) return;
+    const code = String(randomBytes(3).reduce((a, b) => a * 256 + b, 0) % 1000000).padStart(6, '0');
+    write(K.recovery, { email: normalized, code, expiresAt: Date.now() + 15 * 60_000 });
+    console.info(`[Aarogya] local backend recovery code for ${normalized}: ${code}`);
+  }
+
+  async consumeRecoveryFromUrl(): Promise<boolean> {
+    // No emailed links in the local backend; recovery is always by code.
+    return false;
+  }
+
+  async verifyRecoveryCode(email: string, code: string): Promise<void> {
+    const pending = read<{ email: string; code: string; expiresAt: number } | null>(K.recovery, null);
+    const normalized = email.toLowerCase().trim();
+    if (!pending || pending.email !== normalized || pending.code !== code.trim()) {
+      throw new Error('That code is not correct. Check it and try again.');
+    }
+    if (Date.now() > pending.expiresAt) {
+      localStorage.removeItem(K.recovery);
+      throw new Error('That code has expired. Request a new one.');
+    }
+    const user = this.users().find((u) => u.email.toLowerCase() === normalized);
+    if (!user) throw new Error('That code is not correct. Check it and try again.');
+    // Mark the code as redeemed so it cannot be replayed, and remember who it
+    // was for until the new password is set.
+    write(K.recovery, { ...pending, verifiedUserId: user.id });
+  }
+
+  async updatePassword(newPassword: string): Promise<void> {
+    if (newPassword.length < 8) throw new Error('Password must be at least 8 characters.');
+    const pending = read<{ verifiedUserId?: string } | null>(K.recovery, null);
+    const userId = pending?.verifiedUserId ?? localStorage.getItem(K.session);
+    if (!userId) throw new Error('Your reset link is no longer valid. Request a new one.');
+
+    const users = this.users();
+    const idx = users.findIndex((u) => u.id === userId);
+    if (idx < 0) throw new Error('Your reset link is no longer valid. Request a new one.');
+
+    const salt = randomBytes(8).join('-');
+    users[idx].passwordHash = `${salt}$${await this.hash(newPassword, salt)}`;
+    write(K.users, users);
+    localStorage.removeItem(K.recovery);
   }
 
   async currentUser(): Promise<Profile | null> {

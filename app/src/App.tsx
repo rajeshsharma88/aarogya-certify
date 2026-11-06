@@ -12,6 +12,7 @@ import { Verify } from './pages/Verify';
 import { Dashboard } from './pages/Dashboard';
 import { Admin } from './pages/Admin';
 import { Login, Register, RequireAdmin, RequireAuth } from './pages/AuthPages';
+import { ForgotPassword, ResetPassword } from './pages/PasswordResetPages';
 
 function NotFound() {
   return (
@@ -78,6 +79,8 @@ export default function App() {
 
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
+        <Route path="forgot-password" element={<ForgotPassword />} />
+        <Route path="reset-password" element={<ResetPassword />} />
 
         <Route
           path="dashboard"

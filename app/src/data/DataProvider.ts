@@ -34,6 +34,24 @@ export interface DataProvider {
   logout(): Promise<void>;
   currentUser(): Promise<Profile | null>;
 
+  // ---- password recovery
+  /**
+   * Starts recovery for an address. Always resolves, whether or not the address
+   * is registered: reporting "no such account" would turn this form into a way
+   * to discover who has signed up.
+   */
+  requestPasswordReset(email: string): Promise<void>;
+  /**
+   * Consumes a recovery grant that arrived in the URL (the link in the email
+   * lands back here with tokens in the fragment). Returns true when a recovery
+   * session was established, so the page can ask for a new password.
+   */
+  consumeRecoveryFromUrl(): Promise<boolean>;
+  /** Exchanges the emailed numeric code for a recovery session. */
+  verifyRecoveryCode(email: string, code: string): Promise<void>;
+  /** Sets a new password for whoever the current recovery session belongs to. */
+  updatePassword(newPassword: string): Promise<void>;
+
   // assessment — language parameter for bilingual questions
   /** Creates an attempt with a randomized question selection. Correct answers are never returned. */
   startAttempt(userId: string, certificationId: string, candidateName: string): Promise<Attempt>;
