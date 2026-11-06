@@ -173,7 +173,7 @@ export interface Translations {
 
 export const EN_TRANSLATIONS: Translations = {
   // Navigation & Layout
-  appName: 'Aarogya India',
+  appName: 'Aarogya India Gurukul',
   home: 'Home',
   certifications: 'Certifications',
   directory: 'Directory',
@@ -345,7 +345,7 @@ export const EN_TRANSLATIONS: Translations = {
 
 export const HI_TRANSLATIONS: Translations = {
   // Navigation & Layout
-  appName: 'आरोग्य इंडिया',
+  appName: 'आरोग्य इंडिया गुरुकुल',
   home: 'होम',
   certifications: 'प्रमाणपत्र',
   directory: 'निर्देशिका',

@@ -4,6 +4,7 @@ import { provider } from '../data';
 import { useAsync } from '../hooks/useAsync';
 import { useLanguage } from '../hooks/useLanguage';
 import { verifyPageQrDataUrl } from '../modules/certificate/qr';
+import { Logo } from '../brand/Logo';
 import type { Language } from '../types';
 
 /**
@@ -513,7 +514,13 @@ export function PanchkarmaLanding() {
 
         <div className="container-page relative py-16 sm:py-24">
           <div className="mx-auto max-w-3xl text-center">
-            <span className="chip bg-white text-brand-800 ring-1 ring-brand-200">{c.chip}</span>
+            {/* The full badge, large: this is the page paid traffic lands on, so
+                it is the one place worth the heavier asset. */}
+            {/* mix-blend-multiply drops the badge's white backing into the
+                saffron gradient; without it the JPEG shows as a white box. */}
+            <Logo large className="mx-auto h-28 w-auto mix-blend-multiply sm:h-36" />
+
+            <span className="chip mt-6 bg-white text-brand-800 ring-1 ring-brand-200">{c.chip}</span>
 
             <h1 className="mt-5 text-balance font-display text-4xl font-semibold leading-tight tracking-tight text-ink sm:text-5xl lg:text-6xl">
               {c.h1a}

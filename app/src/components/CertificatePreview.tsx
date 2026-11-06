@@ -26,7 +26,7 @@ export function CertificatePreview({ cert }: { cert: Certificate }) {
     <div className="overflow-hidden rounded-xl border-4 border-brand-700 bg-white shadow-lift">
       <div className="border border-saffron-300 p-5 sm:p-10">
         <div className="text-center">
-          <LogoWordmark />
+          <LogoWordmark centered />
           <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.32em] text-brand-700">
             Certificate of Achievement
           </p>
