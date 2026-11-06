@@ -57,8 +57,9 @@ export function Directory() {
       <header className="mt-4 max-w-3xl">
         <h1 className="font-display text-3xl font-semibold text-ink sm:text-4xl">Certification directory</h1>
         <p className="mt-2 text-slate-600">
-          Browse {certs.length || 'all'} assessments across {domains.length || '8'} professional domains. Every
-          assessment is free, timed and objectively scored.
+          Browse {certs.length || 'all'} assessments across {domains.length || 'all'}{' '}
+          {domains.length === 1 ? 'professional domain' : 'professional domains'}. Every assessment is free,
+          timed and objectively scored.
         </p>
       </header>
 

@@ -158,7 +158,9 @@ export class LocalProvider implements DataProvider {
   }
 
   async getDomainBySlug(slug: string, language: Language = 'en'): Promise<Domain | undefined> {
-    const domain = read<Domain[]>(K.domains, []).find((d) => d.slug === slug);
+    // isActive is an authorisation gate, not just a listing filter: an
+    // unauthorised domain must not be reachable by direct URL either.
+    const domain = read<Domain[]>(K.domains, []).find((d) => d.slug === slug && d.isActive);
     return domain ? localizeDomain(domain, language) : undefined;
   }
 
@@ -187,7 +189,7 @@ export class LocalProvider implements DataProvider {
   }
 
   async getCertificationBySlug(slug: string, language: Language = 'en'): Promise<Certification | undefined> {
-    const cert = read<Certification[]>(K.certifications, []).find((c) => c.slug === slug);
+    const cert = read<Certification[]>(K.certifications, []).find((c) => c.slug === slug && c.isActive);
     return cert ? localizeCertification(cert, language) : undefined;
   }
 
@@ -267,7 +269,7 @@ export class LocalProvider implements DataProvider {
     );
     if (existing) return existing;
     const cert = read<Certification[]>(K.certifications, []).find((c) => c.id === certificationId);
-    if (!cert) throw new Error('Certification not found.');
+    if (!cert || !cert.isActive) throw new Error('Certification not found.');
     const bank = this.questions().filter((q) => q.certificationId === certificationId && q.isActive);
     if (bank.length === 0) throw new Error('This assessment has no questions yet.');
     const selected = shuffle(bank).slice(0, Math.min(cert.questionCount, bank.length));

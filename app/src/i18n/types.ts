@@ -185,7 +185,7 @@ export const EN_TRANSLATIONS: Translations = {
 
   // Home page
   heroTitle: 'Prove your skill. Earn trust.',
-  heroSubtitle: 'Take industry-recognized certifications and get verified credentials.',
+  heroSubtitle: 'Objective Ayurveda assessments with independently verifiable certificates.',
   searchPlaceholder: 'Search certifications...',
   browseByCategory: 'Browse by Category',
   featuredCertifications: 'Featured Certifications',
@@ -357,7 +357,7 @@ export const HI_TRANSLATIONS: Translations = {
 
   // Home page
   heroTitle: 'अपने कौशल को साबित करें। विश्वास अर्जित करें।',
-  heroSubtitle: 'उद्योग-मान्यता प्राप्त प्रमाणपत्र लें और सत्यापित क्रेडेंशियल प्राप्त करें।',
+  heroSubtitle: 'वस्तुनिष्ठ आयुर्वेद आकलन और स्वतंत्र रूप से सत्यापन-योग्य प्रमाणपत्र।',
   searchPlaceholder: 'प्रमाणपत्र खोजें...',
   browseByCategory: 'श्रेणी के अनुसार ब्राउज़ करें',
   featuredCertifications: 'विशेष प्रमाणपत्र',

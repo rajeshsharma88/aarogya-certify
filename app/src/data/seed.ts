@@ -3,7 +3,26 @@ import { DOMAIN_TRANSLATIONS, CERTIFICATION_TRANSLATIONS } from './translations'
 
 const now = '2026-01-01T00:00:00.000Z';
 
-export const DOMAINS: Domain[] = [
+/**
+ * Aarogya India is authorised to certify in Ayurveda only, so every other
+ * domain is seeded but inactive. The catalog filters on isActive in both the
+ * local and Supabase providers, so inactive domains and their certifications
+ * are hidden from the directory, search, home page and assessment start.
+ *
+ * Deactivated rather than deleted on purpose: attempts and certificates
+ * reference certifications with ON DELETE RESTRICT, so removing the rows would
+ * either be refused by the database or strand certificates already issued
+ * against them. Those stay verifiable; they are simply no longer on offer.
+ *
+ * To certify in another domain later, add its id here — nothing else changes.
+ */
+export const AUTHORISED_DOMAIN_IDS: readonly string[] = ['dom-ayurveda'];
+
+export function isAuthorisedDomain(domainId: string): boolean {
+  return AUTHORISED_DOMAIN_IDS.includes(domainId);
+}
+
+const DOMAIN_SEEDS: Domain[] = [
   { id: 'dom-tech', slug: 'technology', name: 'Technology & Data', description: 'Software, data, cloud and security skills.', nameHi: DOMAIN_TRANSLATIONS['dom-tech'].nameHi, descriptionHi: DOMAIN_TRANSLATIONS['dom-tech'].descriptionHi, icon: '💻', sortOrder: 1, isActive: true },
   { id: 'dom-health', slug: 'health', name: 'Health & Wellness', description: 'Nutrition, fitness, public health and care.', nameHi: DOMAIN_TRANSLATIONS['dom-health'].nameHi, descriptionHi: DOMAIN_TRANSLATIONS['dom-health'].descriptionHi, icon: '🩺', sortOrder: 2, isActive: true },
   { id: 'dom-ayurveda', slug: 'ayurveda', name: 'Ayurveda', description: 'Traditional Indian medicine, therapies, and wellness practices.', nameHi: DOMAIN_TRANSLATIONS['dom-ayurveda'].nameHi, descriptionHi: DOMAIN_TRANSLATIONS['dom-ayurveda'].descriptionHi, icon: '🌿', sortOrder: 2.5, isActive: true },
@@ -14,6 +33,11 @@ export const DOMAINS: Domain[] = [
   { id: 'dom-engineering', slug: 'engineering', name: 'Engineering & Safety', description: 'Core engineering, construction and safety.', nameHi: DOMAIN_TRANSLATIONS['dom-engineering'].nameHi, descriptionHi: DOMAIN_TRANSLATIONS['dom-engineering'].descriptionHi, icon: '🏗️', sortOrder: 7, isActive: true },
   { id: 'dom-hr', slug: 'hr', name: 'HR & People', description: 'Recruitment, people ops and leadership.', nameHi: DOMAIN_TRANSLATIONS['dom-hr'].nameHi, descriptionHi: DOMAIN_TRANSLATIONS['dom-hr'].descriptionHi, icon: '🤝', sortOrder: 8, isActive: true },
 ];
+
+export const DOMAINS: Domain[] = DOMAIN_SEEDS.map((d) => ({
+  ...d,
+  isActive: isAuthorisedDomain(d.id),
+}));
 
 interface CertSeed {
   slug: string;
@@ -75,7 +99,7 @@ export const CERTIFICATIONS: Certification[] = CERT_SEEDS.map((c, i) => {
     questionCount: 10,
     passScorePct: c.passScorePct ?? 60,
     topics: c.topics,
-    isActive: true,
+    isActive: isAuthorisedDomain(c.domainId),
     popularity: c.popularity,
     createdAt: new Date(Date.parse(now) - (CERT_SEEDS.length - i) * 86400000).toISOString(),
   };

@@ -31,9 +31,9 @@ describe('catalog', () => {
       expect(hay).toContain('nutrition');
     }
 
-    const health = await p.listCertifications({ domainSlug: 'health' });
-    expect(health.length).toBeGreaterThan(0);
-    for (const c of health) expect(c.domainId).toBe('dom-health');
+    const ayurveda = await p.listCertifications({ domainSlug: 'ayurveda' });
+    expect(ayurveda.length).toBeGreaterThan(0);
+    for (const c of ayurveda) expect(c.domainId).toBe('dom-ayurveda');
   });
 
   it('sorts alphabetically and by newest', async () => {
@@ -49,8 +49,8 @@ describe('catalog', () => {
 
   it('resolves a certification by slug', async () => {
     const p = await newProvider();
-    const cert = await p.getCertificationBySlug('web-development');
-    expect(cert?.title).toBe('Web Development');
+    const cert = await p.getCertificationBySlug('panchkarma-therapy');
+    expect(cert?.title).toBe('Panchkarma Therapy Fundamentals');
   });
 });
 
@@ -88,7 +88,7 @@ describe('assessment engine', () => {
   it('creates a randomized attempt and never exposes correct answers', async () => {
     const p = await newProvider();
     const user = await p.register('Rahul Nair', 'rahul@example.com', 'password123');
-    const cert = (await p.getCertificationBySlug('data-analytics'))!;
+    const cert = (await p.getCertificationBySlug('marma-therapy'))!;
 
     const attempt = await p.startAttempt(user.id, cert.id, 'Rahul Nair');
     expect(attempt.status).toBe('in_progress');
@@ -110,7 +110,7 @@ describe('assessment engine', () => {
   it('scores a perfect attempt server-side and issues one certificate', async () => {
     const p = await newProvider();
     const user = await p.register('Meera Iyer', 'meera@example.com', 'password123');
-    const cert = (await p.getCertificationBySlug('web-development'))!;
+    const cert = (await p.getCertificationBySlug('panchkarma-therapy'))!;
     const attempt = await p.startAttempt(user.id, cert.id, 'Meera Iyer');
 
     for (const qid of attempt.questionIds) {
@@ -141,7 +141,7 @@ describe('assessment engine', () => {
   it('fails an attempt with no correct answers and issues no certificate', async () => {
     const p = await newProvider();
     const user = await p.register('Vikram Rao', 'vikram@example.com', 'password123');
-    const cert = (await p.getCertificationBySlug('hr-recruitment'))!;
+    const cert = (await p.getCertificationBySlug('ayurvedic-herbs'))!;
     const attempt = await p.startAttempt(user.id, cert.id, 'Vikram Rao');
 
     for (const qid of attempt.questionIds) {
@@ -160,7 +160,7 @@ describe('certificate verification', () => {
   it('verifies a valid certificate publicly', async () => {
     const p = await newProvider();
     const user = await p.register('Neha Gupta', 'neha@example.com', 'password123');
-    const cert = (await p.getCertificationBySlug('digital-marketing'))!;
+    const cert = (await p.getCertificationBySlug('ayurvedic-nutrition'))!;
     const attempt = await p.startAttempt(user.id, cert.id, 'Neha Gupta');
     for (const qid of attempt.questionIds) await p.saveAnswer(attempt.id, qid, correctOptionIds(qid));
     await p.submitAttempt(attempt.id);
@@ -170,7 +170,7 @@ describe('certificate verification', () => {
     expect(view.found).toBe(true);
     expect(view.status).toBe('valid');
     expect(view.holderName).toBe('Neha Gupta');
-    expect(view.title).toBe('Digital Marketing');
+    expect(view.title).toBe('Ayurvedic Diet & Nutrition');
     expect(view.org).toBe('Aarogya India');
     expect(view.certificateNo).toBe(issued.certificateNo);
   });
@@ -185,7 +185,7 @@ describe('certificate verification', () => {
   it('reflects revocation immediately in public verification', async () => {
     const p = await newProvider();
     const user = await p.register('Arjun Singh', 'arjun@example.com', 'password123');
-    const cert = (await p.getCertificationBySlug('cyber-security'))!;
+    const cert = (await p.getCertificationBySlug('panchkarma-therapy'))!;
     const attempt = await p.startAttempt(user.id, cert.id, 'Arjun Singh');
     for (const qid of attempt.questionIds) await p.saveAnswer(attempt.id, qid, correctOptionIds(qid));
     await p.submitAttempt(attempt.id);

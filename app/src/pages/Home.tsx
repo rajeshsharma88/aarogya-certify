@@ -61,8 +61,8 @@ export function Home() {
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-base text-slate-600 sm:text-lg">
               {language === 'en'
-                ? 'Take short, objective skill assessments across technology, health, business and more. Get a certificate with a unique ID that anyone can verify in seconds.'
-                : 'तकनीकी, स्वास्थ्य, व्यावसायिक और अन्य क्षेत्रों में कई प्रकार के कौशल मूल्यांकन लें। एक अद्वितीय आईडी वाला प्रमाणपत्र प्राप्त करें जिसे कोई भी कुछ सेकंड में सत्यापित कर सकता है।'}
+                ? 'Take short, objective assessments in Ayurveda — Panchkarma, Marma, Ayurvedic nutrition and herbal medicine. Get a certificate with a unique ID that anyone can verify in seconds.'
+                : 'आयुर्वेद में संक्षिप्त, वस्तुनिष्ठ आकलन लें — पंचकर्म, मर्म, आयुर्वेदिक पोषण और हर्बल चिकित्सा। एक अद्वितीय आईडी वाला प्रमाणपत्र प्राप्त करें जिसे कोई भी कुछ सेकंड में सत्यापित कर सकता है।'}
             </p>
 
             <form onSubmit={submitSearch} className="mx-auto mt-8 flex max-w-xl gap-2" role="search">
