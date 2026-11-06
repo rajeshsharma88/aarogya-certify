@@ -14,6 +14,7 @@ import type {
   VerificationView,
 } from '../../types';
 import type { DataProvider } from '../DataProvider';
+import { AuthError, parseAuthError } from '../authError';
 
 /**
  * Supabase adapter implementing the same DataProvider surface.
@@ -75,14 +76,22 @@ export class SupabaseProvider implements DataProvider {
   }
 
   private async auth(path: string, body?: unknown): Promise<any> {
-    const res = await fetch(`${this.url}/auth/v1/${path}`, {
-      method: body ? 'POST' : 'GET',
-      headers: { apikey: this.anonKey, 'Content-Type': 'application/json', ...(this.token() ? { Authorization: `Bearer ${this.token()}` } : {}) },
-      ...(body ? { body: JSON.stringify(body) } : {}),
-    });
+    let res: Response;
+    try {
+      res = await fetch(`${this.url}/auth/v1/${path}`, {
+        method: body ? 'POST' : 'GET',
+        headers: { apikey: this.anonKey, 'Content-Type': 'application/json', ...(this.token() ? { Authorization: `Bearer ${this.token()}` } : {}) },
+        ...(body ? { body: JSON.stringify(body) } : {}),
+      });
+    } catch (err) {
+      // fetch only rejects when the request never completed — offline, DNS, CORS,
+      // or the gateway being down. That is not a credential problem, so it must
+      // not be reported as one.
+      throw new AuthError('network', 0, err instanceof Error ? err.message : String(err));
+    }
     if (!res.ok) {
       const detail = await res.text().catch(() => '');
-      throw new Error(`Auth ${res.status}: ${detail || res.statusText}`);
+      throw parseAuthError(res.status, detail || res.statusText);
     }
     return res.status === 204 ? null : res.json();
   }
@@ -133,9 +142,15 @@ export class SupabaseProvider implements DataProvider {
   async register(fullName: string, email: string, password: string): Promise<Profile> {
     const out = await this.auth('signup', { email, password, data: { full_name: fullName } });
     if (out?.access_token) return this.profileFor(out);
-    // email-confirmation enabled: sign in immediately if possible
-    const login = await this.auth('token?grant_type=password', { email, password });
-    return this.profileFor(login);
+    // No session came back, which means this instance has email confirmation
+    // enabled. The old code tried a password grant here, which can only fail
+    // with email_not_confirmed — so a registration that had in fact succeeded
+    // was reported to the candidate as an error. Say what actually happened.
+    //
+    // GoTrue also returns a session-less user when the address is already
+    // registered (deliberately, so the form cannot be used to enumerate
+    // accounts), and "check your inbox" is the right answer in that case too.
+    throw new AuthError('email_confirmation_required', 200);
   }
 
   async login(email: string, password: string): Promise<Profile> {

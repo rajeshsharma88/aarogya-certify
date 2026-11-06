@@ -2,7 +2,28 @@ import { useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { FieldError } from '../components/ui';
+import { usingLocalBackend } from '../data';
+import { SUPPORT_EMAIL, supportMailto } from '../brand/contact';
+import { AuthError, authErrorMessage } from '../data/authError';
 import type { ReactNode } from 'react';
+
+/**
+ * A failure the candidate can act on, rather than a red line of JSON.
+ * `tone` is 'info' where nothing went wrong — an account awaiting its
+ * confirmation email is a successful registration, not an error.
+ */
+function AuthNotice({ tone, title, children }: { tone: 'error' | 'info'; title: string; children?: ReactNode }) {
+  const styles =
+    tone === 'info'
+      ? 'border-brand-200 bg-brand-50 text-brand-900'
+      : 'border-red-200 bg-red-50 text-red-900';
+  return (
+    <div className={`rounded-lg border p-4 text-sm ${styles}`} role={tone === 'error' ? 'alert' : 'status'}>
+      <p className="font-semibold">{title}</p>
+      {children ? <div className="mt-1 space-y-1">{children}</div> : null}
+    </div>
+  );
+}
 
 export function RequireAuth({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
@@ -36,6 +57,7 @@ export function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [unconfirmed, setUnconfirmed] = useState(false);
   const [busy, setBusy] = useState(false);
 
   if (user) return <Navigate to={params.get('next') ?? '/dashboard'} replace />;
@@ -43,12 +65,21 @@ export function Login() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setUnconfirmed(false);
     setBusy(true);
     try {
       await login(email, password);
       navigate(params.get('next') ?? '/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to sign in.');
+      // An unconfirmed address needs an explanation and a next step, not a
+      // one-line field error — the password was correct and retyping it will
+      // not help.
+      if (err instanceof AuthError && err.code === 'email_not_confirmed') {
+        setUnconfirmed(true);
+      } else {
+        setError(authErrorMessage(err, 'Unable to sign in. Please try again.'));
+      }
+      if (err instanceof AuthError) console.warn('[Aarogya] sign-in failed:', err.code, err.detail);
     } finally {
       setBusy(false);
     }
@@ -60,6 +91,24 @@ export function Login() {
         <div className="card p-8">
           <h1 className="font-display text-2xl font-semibold text-ink">Sign in</h1>
           <p className="mt-1 text-sm text-slate-600">Access your assessments and certificates.</p>
+          {unconfirmed && (
+            <div className="mt-5">
+              <AuthNotice tone="error" title="Confirm your email address first">
+                <p>
+                  Your account exists, but the address has not been confirmed yet, so it cannot sign
+                  in. Open the confirmation link sent to <span className="font-medium">{email}</span>,
+                  then come back and sign in.
+                </p>
+                <p>
+                  If no email arrived, check your spam folder, or write to{' '}
+                  <a className="font-medium underline" href={supportMailto('Confirm my account')}>
+                    {SUPPORT_EMAIL}
+                  </a>{' '}
+                  and we will confirm it for you.
+                </p>
+              </AuthNotice>
+            </div>
+          )}
           <form onSubmit={onSubmit} className="mt-6 space-y-4" noValidate>
             <div>
               <label className="label" htmlFor="email">Email</label>
@@ -84,11 +133,18 @@ export function Login() {
             </Link>
           </p>
         </div>
-        <div className="mt-4 rounded-lg border border-dashed border-slate-300 bg-white p-4 text-xs text-slate-600">
-          <p className="font-semibold text-slate-700">Local demo accounts</p>
-          <p className="mt-1">Admin — admin@aarogya.in / Admin@12345</p>
-          <p>Candidate — register any email above.</p>
-        </div>
+        {/*
+          Only ever rendered against the browser-only demo backend. These are
+          seeded demo credentials, but printing an admin email and password on a
+          public sign-in page invites them to be tried against the real one.
+        */}
+        {usingLocalBackend && (
+          <div className="mt-4 rounded-lg border border-dashed border-slate-300 bg-white p-4 text-xs text-slate-600">
+            <p className="font-semibold text-slate-700">Local demo accounts</p>
+            <p className="mt-1">Admin — admin@aarogya.in / Admin@12345</p>
+            <p>Candidate — register any email above.</p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -102,6 +158,7 @@ export function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
   const [busy, setBusy] = useState(false);
 
   if (user) return <Navigate to={params.get('next') ?? '/dashboard'} replace />;
@@ -114,10 +171,39 @@ export function Register() {
       await register(fullName, email, password);
       navigate(params.get('next') ?? '/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to create account.');
+      // The account was created; it just has no session until the address is
+      // confirmed. Reporting that as a failure made people register twice.
+      if (err instanceof AuthError && err.code === 'email_confirmation_required') {
+        setAwaitingConfirmation(true);
+      } else {
+        setError(authErrorMessage(err, 'Unable to create your account. Please try again.'));
+      }
+      if (err instanceof AuthError) console.warn('[Aarogya] registration:', err.code, err.detail);
     } finally {
       setBusy(false);
     }
+  }
+
+  if (awaitingConfirmation) {
+    return (
+      <div className="container-page flex justify-center py-16">
+        <div className="w-full max-w-md card p-8">
+          <AuthNotice tone="info" title="Account created — one step left">
+            <p>
+              We have sent a confirmation link to <span className="font-medium">{email}</span>. Open it
+              to activate your account, then sign in.
+            </p>
+            <p>There is no need to register again. Check your spam folder if it has not arrived.</p>
+          </AuthNotice>
+          <Link
+            to={params.get('next') ? `/login?next=${encodeURIComponent(params.get('next')!)}` : '/login'}
+            className="btn-primary mt-6 w-full justify-center"
+          >
+            Go to sign in
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (

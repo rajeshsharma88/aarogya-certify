@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { PaymentOrder } from '../types';
+import { supportMailto } from '../brand/contact';
 
 interface RefundRequestProps {
   order: PaymentOrder;
@@ -150,7 +151,7 @@ export function RefundRequest({ order, onSubmit, onCancel }: RefundRequestProps)
       {/* Contact Support */}
       <p className="text-center text-xs text-slate-600">
         Have questions?{' '}
-        <a href="mailto:support@aarogya.in" className="text-brand-600 underline">
+        <a href={supportMailto(`Refund request — order ${order.id}`)} className="text-brand-600 underline">
           Contact support
         </a>
       </p>

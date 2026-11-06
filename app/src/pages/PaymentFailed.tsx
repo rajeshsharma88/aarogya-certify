@@ -1,4 +1,5 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { supportMailto } from '../brand/contact';
 
 export function PaymentFailed() {
   const navigate = useNavigate();
@@ -70,7 +71,7 @@ export function PaymentFailed() {
         {/* Support */}
         <p className="mt-6 text-center text-xs text-slate-600">
           Need help?{' '}
-          <a href="mailto:support@aarogya.in" className="text-brand-600 underline">
+          <a href={supportMailto('Payment failed — need help')} className="text-brand-600 underline">
             Contact Support
           </a>
         </p>
