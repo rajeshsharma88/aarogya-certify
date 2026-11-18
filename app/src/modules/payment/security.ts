@@ -51,30 +51,21 @@ export const paymentCreationLimiter = new RateLimiter(5, 60000); // 5 per minute
 export const paymentVerificationLimiter = new RateLimiter(10, 60000); // 10 per minute
 export const linkedinShareLimiter = new RateLimiter(3, 60000); // 3 per minute
 
-/**
- * Validate Razorpay webhook signature
- * In production: verify against Razorpay key
+/*
+ * verifyRazorpaySignature used to live here and returned true for any
+ * non-empty signature, so anything calling it would have accepted three
+ * invented strings as proof of payment.
+ *
+ * It has been removed rather than fixed, because it cannot be done correctly
+ * in this file: verifying the signature requires the Razorpay key secret, and
+ * anything shipped to the browser is readable by whoever is paying. A secret
+ * in the bundle is not a secret, and a check the client performs is a check
+ * the client can skip.
+ *
+ * Verification now happens in the supabase/functions/razorpay-verify and
+ * razorpay-webhook edge functions, which hold the secret and compare the HMAC
+ * in constant time.
  */
-export function verifyRazorpaySignature(
-  orderId: string,
-  paymentId: string,
-  signature: string,
-  secret: string
-): boolean {
-  // Production implementation would use:
-  // const crypto = require('crypto');
-  // const generated_signature = crypto
-  //   .createHmac('sha256', secret)
-  //   .update(orderId + '|' + paymentId)
-  //   .digest('hex');
-  // return generated_signature === signature;
-
-  // Demo: always verify (Phase 4+: implement real verification)
-  if (!orderId || !paymentId || !signature || !secret) {
-    return false;
-  }
-  return true;
-}
 
 /**
  * Sanitize user input to prevent XSS

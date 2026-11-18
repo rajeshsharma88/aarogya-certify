@@ -1,6 +1,7 @@
 import type {
   Attempt,
   Certificate,
+  CertificatePaymentIntent,
   Certification,
   CatalogFilter,
   Currency,
@@ -516,6 +517,11 @@ export class LocalProvider implements DataProvider {
       status: 'valid',
       verifyToken: randomCertBlock(16),
       createdAt: new Date().toISOString(),
+      // The demo backend cannot take payment, so certificates are issued
+      // unpaid-but-downloadable rather than stranding the visitor behind a
+      // checkout that cannot work.
+      isPaid: true,
+      paidAt: new Date().toISOString(),
     };
     certificates.push(certificate);
     write(K.certificates, certificates);
@@ -724,6 +730,25 @@ export class LocalProvider implements DataProvider {
 
   private paymentInvoices(): PaymentInvoice[] {
     return read<PaymentInvoice[]>(K.paymentInvoices, []);
+  }
+
+  // ------------------------------------------------------ certificate payment
+  //
+  // There is no gateway in the browser-only backend and no secret it could
+  // keep, so a real purchase is impossible here. Rather than simulate one —
+  // which would make the demo look like it takes payments — these refuse
+  // clearly. Certificates are marked paid on issue in this backend, so the
+  // demo stays usable.
+  async startCertificatePayment(_certificateId: string): Promise<CertificatePaymentIntent> {
+    throw new Error(
+      'Payments need the hosted backend. This demo issues certificates without charging.',
+    );
+  }
+
+  async confirmCertificatePayment(): Promise<void> {
+    throw new Error(
+      'Payments need the hosted backend. This demo issues certificates without charging.',
+    );
   }
 
   async createPaymentOrder(

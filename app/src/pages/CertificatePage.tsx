@@ -4,6 +4,7 @@ import type { Certificate } from '../types';
 import { provider } from '../data';
 import { useAuth } from '../context/AuthContext';
 import { CertificatePreview } from '../components/CertificatePreview';
+import { PaymentCheckout } from '../components/PaymentCheckout';
 import { Spinner, StatusBadge } from '../components/ui';
 import { verificationUrl } from '../modules/certificate/qr';
 
@@ -89,10 +90,30 @@ export function CertificatePage() {
         <CertificatePreview cert={cert} />
       </div>
 
+      {/* Unpaid certificates still show the preview and remain publicly
+          verifiable — what is withheld is the PDF download. */}
+      {!cert.isPaid && (
+        <div className="mt-6">
+          <PaymentCheckout
+            certificateId={cert.id}
+            holderName={cert.holderName}
+            email={user?.email}
+            onPaid={() => {
+              // Re-read rather than flipping the flag locally: isPaid is the
+              // server's answer, and only the server can give it.
+              void provider.getCertificateByNo(certificateNo).then((c) => setCert(c ?? cert));
+              setNotice('Payment confirmed. Your certificate is ready to download.');
+            }}
+          />
+        </div>
+      )}
+
       <div className="mt-6 flex flex-wrap gap-3">
-        <button type="button" className="btn-primary" onClick={() => void download()} disabled={downloading}>
-          {downloading ? 'Preparing PDF…' : 'Download PDF certificate'}
-        </button>
+        {cert.isPaid && (
+          <button type="button" className="btn-primary" onClick={() => void download()} disabled={downloading}>
+            {downloading ? 'Preparing PDF…' : 'Download PDF certificate'}
+          </button>
+        )}
         <button type="button" className="btn-outline" onClick={() => void copyLink()}>
           Copy verification link
         </button>

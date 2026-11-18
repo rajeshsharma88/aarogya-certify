@@ -2,6 +2,7 @@ import type {
   Attempt,
   Certificate,
   Certification,
+  CertificatePaymentIntent,
   CatalogFilter,
   Currency,
   Domain,
@@ -15,6 +16,19 @@ import type {
 } from '../../types';
 import type { DataProvider } from '../DataProvider';
 import { AuthError, parseAuthError } from '../authError';
+
+/** Error codes the payment edge functions return, as sentences for the page. */
+const PAYMENT_MESSAGES: Record<string, string> = {
+  not_authenticated: 'Please sign in again to complete your payment.',
+  certificate_not_found: 'We could not find that certificate on your account.',
+  already_paid: 'This certificate has already been paid for.',
+  invalid_signature:
+    'We could not verify that payment with Razorpay. If money has left your account, contact us and we will sort it out — do not pay again.',
+  order_not_found: 'We could not match that payment to an order.',
+  forbidden: 'That payment belongs to a different account.',
+  gateway_error: 'Razorpay could not start the payment just now. Please try again in a moment.',
+  internal_error: 'Something went wrong on our side. Please try again in a moment.',
+};
 
 /** Removes the fragment without adding a history entry or reloading. */
 function clearHash(): void {
@@ -439,6 +453,50 @@ export class SupabaseProvider implements DataProvider {
   }
 
   // -------------------------------------------------------- payments (Phase 1)
+  // ------------------------------------------------------ certificate payment
+  //
+  // Both calls go to edge functions rather than PostgREST: they are the only
+  // place the Razorpay key secret exists, so they are the only place an order
+  // can be created at Razorpay or a signature checked.
+  private async fn<T>(name: string, body: unknown): Promise<T> {
+    let res: Response;
+    try {
+      res = await fetch(`${this.url}/functions/v1/${name}`, {
+        method: 'POST',
+        headers: this.headers(),
+        body: JSON.stringify(body),
+      });
+    } catch (err) {
+      throw new Error(
+        `We could not reach the payment service. ${err instanceof Error ? err.message : ''}`.trim(),
+      );
+    }
+    const text = await res.text();
+    if (!res.ok) {
+      const code = (() => {
+        try {
+          return (JSON.parse(text) as { error?: string }).error ?? '';
+        } catch {
+          return '';
+        }
+      })();
+      throw new Error(PAYMENT_MESSAGES[code] ?? 'Something went wrong with the payment. Please try again.');
+    }
+    return (text ? JSON.parse(text) : undefined) as T;
+  }
+
+  async startCertificatePayment(certificateId: string): Promise<CertificatePaymentIntent> {
+    return this.fn<CertificatePaymentIntent>('razorpay-create-order', { certificateId });
+  }
+
+  async confirmCertificatePayment(
+    razorpayOrderId: string,
+    razorpayPaymentId: string,
+    razorpaySignature: string,
+  ): Promise<void> {
+    await this.fn('razorpay-verify', { razorpayOrderId, razorpayPaymentId, razorpaySignature });
+  }
+
   async createPaymentOrder(
     certificateId: string,
     amountPaise: number,
@@ -622,6 +680,8 @@ function mapCertificate(r: Record<string, any>): Certificate {
     status: r.status,
     verifyToken: r.verify_token,
     createdAt: r.created_at,
+    isPaid: r.is_paid ?? false,
+    paidAt: r.paid_at ?? undefined,
   };
 }
 

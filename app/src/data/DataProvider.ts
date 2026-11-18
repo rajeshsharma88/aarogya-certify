@@ -1,6 +1,7 @@
 import type {
   Attempt,
   Certificate,
+  CertificatePaymentIntent,
   Certification,
   CatalogFilter,
   Currency,
@@ -91,6 +92,23 @@ export interface DataProvider {
 
   // payments (Phase 1)
   /** Create a payment order for a certificate download. Returns Razorpay order details. */
+  /**
+   * Starts a certificate purchase. The amount is NOT a parameter: the price is
+   * set server-side, because a client-supplied amount lets anyone buy a
+   * certificate for one paisa.
+   */
+  startCertificatePayment(certificateId: string): Promise<CertificatePaymentIntent>;
+  /**
+   * Hands Razorpay's callback to the server for signature verification. Only
+   * the server can check it — the key secret never reaches the browser — so
+   * this resolving is the only evidence a payment was genuine.
+   */
+  confirmCertificatePayment(
+    razorpayOrderId: string,
+    razorpayPaymentId: string,
+    razorpaySignature: string,
+  ): Promise<void>;
+
   createPaymentOrder(certificateId: string, amountPaise: number, currency?: Currency): Promise<PaymentOrder>;
   /** Get payment status for a certificate. */
   getPaymentStatus(certificateId: string): Promise<PaymentOrder | null>;

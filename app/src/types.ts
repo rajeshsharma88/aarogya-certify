@@ -130,6 +130,20 @@ export interface Certificate {
   status: CertificateStatus;
   verifyToken: string;
   createdAt: string;
+  /** Set by the Razorpay edge functions once payment is confirmed server-side. */
+  isPaid?: boolean;
+  paidAt?: string;
+}
+
+/** What the browser needs to open Razorpay Checkout, all of it decided server-side. */
+export interface CertificatePaymentIntent {
+  orderId: string;
+  razorpayOrderId: string;
+  amountPaise: number;
+  currency: Currency;
+  /** Razorpay key *id* — public by design. The secret never leaves the server. */
+  keyId: string;
+  certificateTitle: string;
 }
 
 export interface VerificationView {
