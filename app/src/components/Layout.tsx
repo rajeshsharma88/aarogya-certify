@@ -169,6 +169,22 @@ export function Layout() {
             </ul>
           </div>
         </div>
+
+        {/* Razorpay's merchant review and Meta's advertiser review both expect
+            these reachable from every page, not only at checkout. */}
+        <div className="border-t border-slate-200 py-5">
+          <nav className="container-page" aria-label="Legal and policies">
+            <ul className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-slate-600">
+              <li><Link className="hover:text-brand-700" to="/pricing">Pricing</Link></li>
+              <li><Link className="hover:text-brand-700" to="/refund-policy">Refunds &amp; Cancellation</Link></li>
+              <li><Link className="hover:text-brand-700" to="/delivery-policy">Delivery</Link></li>
+              <li><Link className="hover:text-brand-700" to="/terms">Terms of Service</Link></li>
+              <li><Link className="hover:text-brand-700" to="/privacy">Privacy Policy</Link></li>
+              <li><Link className="hover:text-brand-700" to="/contact">Contact Us</Link></li>
+            </ul>
+          </nav>
+        </div>
+
         <div className="border-t border-slate-200 py-5">
           <p className="container-page text-xs text-slate-500">
             © {new Date().getFullYear()} {t('appName')}. {t('footerLegal')}

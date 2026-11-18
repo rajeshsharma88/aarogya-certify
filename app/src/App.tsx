@@ -13,6 +13,12 @@ import { Dashboard } from './pages/Dashboard';
 import { Admin } from './pages/Admin';
 import { Login, Register, RequireAdmin, RequireAuth } from './pages/AuthPages';
 import { ForgotPassword, ResetPassword } from './pages/PasswordResetPages';
+import { Terms } from './pages/legal/Terms';
+import { Privacy } from './pages/legal/Privacy';
+import { RefundPolicy } from './pages/legal/RefundPolicy';
+import { DeliveryPolicy } from './pages/legal/DeliveryPolicy';
+import { Pricing } from './pages/legal/Pricing';
+import { Contact } from './pages/legal/Contact';
 
 function NotFound() {
   return (
@@ -79,6 +85,13 @@ export default function App() {
 
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
+        <Route path="terms" element={<Terms />} />
+        <Route path="privacy" element={<Privacy />} />
+        <Route path="refund-policy" element={<RefundPolicy />} />
+        <Route path="delivery-policy" element={<DeliveryPolicy />} />
+        <Route path="pricing" element={<Pricing />} />
+        <Route path="contact" element={<Contact />} />
+
         <Route path="forgot-password" element={<ForgotPassword />} />
         <Route path="reset-password" element={<ResetPassword />} />
 
