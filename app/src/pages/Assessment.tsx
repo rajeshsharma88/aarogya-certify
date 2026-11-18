@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import type { Attempt } from '../types';
 import { provider } from '../data';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../hooks/useLanguage';
 import { Spinner } from '../components/ui';
 
 type SafeQuestion = {
@@ -22,6 +23,7 @@ function fmt(sec: number): string {
 export function Assessment() {
   const { attemptId = '' } = useParams();
   const { user } = useAuth();
+  const { language } = useLanguage();
   const navigate = useNavigate();
 
   const [attempt, setAttempt] = useState<Attempt | null>(null);
@@ -36,6 +38,8 @@ export function Assessment() {
   const [submitting, setSubmitting] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const autoSubmitted = useRef(false);
+  // The language the paper is fetched in, fixed at mount. See the fetch below.
+  const paperLanguage = useRef(language);
 
   // load attempt + questions
   useEffect(() => {
@@ -57,7 +61,11 @@ export function Assessment() {
         navigate(`/assess/${attemptId}/result`, { replace: true });
         return;
       }
-      const qs = (await provider.getAttemptQuestions(attemptId)) as SafeQuestion[];
+      // The paper is fetched in the language the candidate is reading the site
+      // in. Deliberately not re-fetched if they switch language mid-attempt:
+      // swapping the paper under someone against a running clock is worse than
+      // leaving it in the language they started in.
+      const qs = (await provider.getAttemptQuestions(attemptId, paperLanguage.current)) as SafeQuestion[];
       if (!active) return;
       setAttempt(a);
       setQuestions(qs);

@@ -6,6 +6,7 @@ import type {
   CatalogFilter,
   Currency,
   Domain,
+  Language,
   LinkedInShare,
   PaymentInvoice,
   PaymentOrder,
@@ -297,8 +298,21 @@ export class SupabaseProvider implements DataProvider {
     return mapAttempt(row);
   }
 
-  async getAttemptQuestions(attemptId: string) {
-    const rows = await this.rpc<Array<Record<string, any>>>('get_attempt_questions', { p_attempt_id: attemptId });
+  /**
+   * p_language is always sent, never left to the default.
+   *
+   * Two reasons. It is what makes the Hindi question bank reachable — the
+   * adapter used to drop the argument, so a candidate reading the site in
+   * Hindi still sat an English paper. And naming every parameter keeps the
+   * call unambiguous if the function is ever overloaded again: an omitted
+   * argument with a default is exactly what made PostgREST answer PGRST203
+   * and break every assessment (see migration 0007).
+   */
+  async getAttemptQuestions(attemptId: string, language: Language = 'en') {
+    const rows = await this.rpc<Array<Record<string, any>>>('get_attempt_questions', {
+      p_attempt_id: attemptId,
+      p_language: language,
+    });
     return rows.map((r) => ({
       id: r.id,
       certificationId: r.certification_id,
