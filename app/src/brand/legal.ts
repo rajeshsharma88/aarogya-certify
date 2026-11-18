@@ -20,46 +20,67 @@ export const LEGAL = {
   brandName: 'Aarogya India Gurukul',
 
   /**
-   * The registered legal entity. Razorpay matches this against the bank
-   * account and the KYC documents, so it must be exactly as registered —
-   * "Aarogya India Gurukul" alone is likely not it if you are a company,
-   * LLP, or a proprietorship trading under a different name.
+   * Taken from the organisation name published on aarogyaindia.hospital.
+   *
+   * CONFIRM BEFORE SUBMITTING TO RAZORPAY: this is a published trading name,
+   * not necessarily the registered one. Razorpay matches it against the bank
+   * account and KYC documents, so if the entity is registered with a suffix
+   * ("… Pvt Ltd", "… LLP") or under a different name entirely, use that exact
+   * string instead.
    */
-  legalEntityName: TODO,
+  legalEntityName: 'Aarogya India Wellness Hospital',
 
   /** Sole Proprietorship | Partnership | LLP | Private Limited Company | Trust | Society */
   entityType: TODO,
 
-  /** Full registered address including city, state and PIN code. */
-  registeredAddress: TODO,
+  /**
+   * The corporate office given in the hospital site's footer.
+   *
+   * Note: that site's /contact page gives a different address — "Bisrakh,
+   * Greater Noida, Uttar Pradesh" — recorded below as the operating address.
+   * Razorpay expects the address on the site to match the KYC documents, so
+   * confirm which of the two is the registered one.
+   */
+  registeredAddress: 'E-23, E Block, Sector 63, Noida, Hazratpur Wajidpur, Uttar Pradesh 201309',
 
-  /** Operating address, if different from the registered one. */
-  operatingAddress: TODO,
+  /** From the hospital site's contact page. */
+  operatingAddress: 'Bisrakh, Greater Noida, Uttar Pradesh',
 
   /**
-   * Razorpay requires a working telephone number on the site, and the
-   * Consumer Protection (E-Commerce) Rules expect contact details that reach
-   * a human.
+   * The published toll-free customer service line. The hospital site also
+   * lists 8448191460 (technical support) and +91 97203 70596 (contact page).
+   * Whichever is shown here must actually be answered — Razorpay's reviewers
+   * do call it.
    */
-  phone: TODO,
+  phone: '1800 410 8080 (toll-free)',
 
+  /**
+   * The certification product's own address, not the hospital's
+   * contact@aarogyaindia.com, so support for a certificate reaches the people
+   * who can act on it.
+   */
   supportEmail: SUPPORT_EMAIL,
 
-  /** GSTIN if registered. Leave as TODO if you are below the threshold. */
+  /** GSTIN if registered. Not published on the hospital site. */
   gstin: TODO,
 
   /**
-   * The Consumer Protection (E-Commerce) Rules, 2020 require a named
-   * grievance officer with contact details published on the site.
+   * The Consumer Protection (E-Commerce) Rules, 2020 require a *named*
+   * grievance officer with contact details published on the site. The
+   * hospital site names no one, so this has to come from you.
    */
   grievanceOfficerName: TODO,
   grievanceOfficerEmail: TODO,
 
-  /** Working hours for support, e.g. "Monday to Saturday, 10:00–18:00 IST". */
-  supportHours: TODO,
+  /** As published on the hospital site's footer. */
+  supportHours: 'Monday to Saturday, 9:00–19:00 IST',
 
-  /** Governing law venue for disputes, e.g. "Lucknow, Uttar Pradesh". */
-  jurisdiction: TODO,
+  /**
+   * The district covering both the Noida and Greater Noida addresses.
+   * This is a legal election rather than a fact from the site — change it if
+   * your contracts specify a different venue.
+   */
+  jurisdiction: 'Gautam Buddh Nagar, Uttar Pradesh',
 
   /** Certificate price in rupees, matching CERTIFICATE_PRICE_PAISE on the server. */
   certificatePriceInr: 299,
