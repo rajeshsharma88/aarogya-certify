@@ -6,6 +6,7 @@ import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { provider } from './data';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { hasMissingLegalDetails, missingLegalFields } from './brand/legal';
 
 // Dev-only test hook (used by scripts/e2e.mjs). Never exposed in production builds.
@@ -29,7 +30,9 @@ createRoot(document.getElementById('root')!).render(
     <BrowserRouter>
       <LanguageProvider>
         <AuthProvider>
-          <App />
+          <ErrorBoundary>
+            <App />
+          </ErrorBoundary>
         </AuthProvider>
       </LanguageProvider>
     </BrowserRouter>

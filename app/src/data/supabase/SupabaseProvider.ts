@@ -30,6 +30,19 @@ const PAYMENT_MESSAGES: Record<string, string> = {
   internal_error: 'Something went wrong on our side. Please try again in a moment.',
 };
 
+/** The parts of a GoTrue user this adapter reads. */
+interface GoTrueUser {
+  id: string;
+  email?: string;
+  user_metadata?: Record<string, unknown>;
+}
+
+/** A GoTrue token response, as stored under `ac:sb-session`. */
+interface GoTrueSession {
+  access_token: string;
+  user: GoTrueUser;
+}
+
 /** Removes the fragment without adding a history entry or reloading. */
 function clearHash(): void {
   window.history.replaceState(null, '', window.location.pathname + window.location.search);
@@ -115,18 +128,38 @@ export class SupabaseProvider implements DataProvider {
     return res.status === 204 ? null : res.json();
   }
 
-  private async profileFor(token: { access_token: string; user: { id: string; email?: string } }): Promise<Profile> {
+  private async profileFor(token: GoTrueSession): Promise<Profile> {
     localStorage.setItem(this.sessionKey, JSON.stringify(token));
-    const rows = await this.rest<Profile[]>(`profiles?id=eq.${token.user.id}&select=*`);
-    const row = rows[0];
-    if (row) return row;
-    // Fallback: create profile row (RLS allows self-insert).
-    const created = await this.rest<Profile[]>('profiles', {
+    return this.loadProfile(token.user);
+  }
+
+  /**
+   * The profile for an authenticated auth.users record, creating the row if it
+   * is missing.
+   *
+   * This instance has no `on auth.users` trigger, so the profiles row is
+   * created by the first authenticated request. A signed-in account without
+   * one must not be reported as signed out: `attempts.user_id` references
+   * profiles, so start_attempt would fail on the foreign key.
+   *
+   * Does not touch the stored session — currentUser() calls this too, and
+   * re-writing the session there would drop the refresh token.
+   */
+  private async loadProfile(user: GoTrueUser): Promise<Profile> {
+    const email = user.email ?? '';
+    const rows = await this.rest<Array<Record<string, any>>>(`profiles?id=eq.${user.id}&select=*`);
+    if (rows[0]) return mapProfile(rows[0], email);
+
+    const signupName = typeof user.user_metadata?.full_name === 'string' ? user.user_metadata.full_name : '';
+    const fullName = signupName.trim() || nameFromEmail(email);
+    const created = await this.rest<Array<Record<string, any>>>('profiles', {
       method: 'POST',
       headers: { Prefer: 'return=representation' },
-      body: JSON.stringify({ id: token.user.id, full_name: token.user.email ?? 'Learner', role: 'candidate' }),
+      body: JSON.stringify({ id: user.id, full_name: fullName, role: 'candidate' }),
     });
-    return created[0];
+    // PostgREST should echo the row back, but a provider must never hand the
+    // app an undefined profile: every page treats a truthy user as complete.
+    return created[0] ? mapProfile(created[0], email) : { id: user.id, fullName, email, role: 'candidate', createdAt: new Date().toISOString() };
   }
 
   // ------------------------------------------------------------- catalog
@@ -249,8 +282,7 @@ export class SupabaseProvider implements DataProvider {
     try {
       const user = await this.auth('user');
       if (!user?.id) return null;
-      const rows = await this.rest<Profile[]>(`profiles?id=eq.${user.id}&select=*`);
-      return rows[0] ?? null;
+      return await this.loadProfile(user);
     } catch {
       return null;
     }
@@ -599,6 +631,47 @@ export class SupabaseProvider implements DataProvider {
 
 function slugify(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+/**
+ * A readable name when none was recorded, derived from the address.
+ *
+ * Only a display fallback. The name printed on a certificate is always the one
+ * the candidate types on the start page, never this.
+ */
+export function nameFromEmail(email: string): string {
+  const cleaned = (email.split('@')[0] ?? '')
+    .replace(/[._+-]+/g, ' ')
+    .replace(/\d+/g, ' ')
+    .trim();
+  if (!cleaned) return 'Learner';
+  return cleaned
+    .split(/\s+/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
+
+/**
+ * A profiles row as the app's Profile.
+ *
+ * Rows come back snake_case and carry no email at all — the address lives in
+ * auth.users. Returning the raw row left `Profile.fullName` undefined, and the
+ * header's `user.fullName.split(' ')` then threw while rendering Layout, which
+ * wraps every route. With no error boundary that blanked the entire app for
+ * every signed-in user, so this mapping is load-bearing, not cosmetic.
+ */
+export function mapProfile(r: Record<string, any>, email = ''): Profile {
+  // Rows created by the earlier code stored the address in full_name. Show a
+  // name rather than an email address, without needing to rewrite the rows.
+  const stored = typeof r.full_name === 'string' ? r.full_name.trim() : '';
+  const fullName = !stored || stored.includes('@') ? nameFromEmail(stored || email) : stored;
+  return {
+    id: r.id,
+    fullName,
+    email: typeof r.email === 'string' && r.email ? r.email : email,
+    role: r.role === 'admin' ? 'admin' : 'candidate',
+    createdAt: r.created_at ?? new Date().toISOString(),
+  };
 }
 
 function mapDomain(r: Record<string, any>): Domain {

@@ -60,7 +60,10 @@ export function Layout() {
             {user ? (
               <>
                 <span className="text-sm text-slate-600">
-                  {t('navGreeting')}, {user.fullName.split(' ')[0]}
+                  {/* Guarded: this line once threw on an undefined name and,
+                      because Layout wraps every route, took the whole app
+                      down with it. A greeting is never worth a blank page. */}
+                  {t('navGreeting')}, {user.fullName?.split(' ')[0] ?? ''}
                 </span>
                 <button type="button" className="btn-outline" onClick={handleLogout}>
                   {t('navSignOut')}
