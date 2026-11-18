@@ -24,7 +24,7 @@ Environment Variables), then restart it:
 | `RAZORPAY_KEY_ID` | Razorpay Dashboard → Account & Settings → API Keys |
 | `RAZORPAY_KEY_SECRET` | shown **once** when the key is generated |
 | `RAZORPAY_WEBHOOK_SECRET` | you choose it when creating the webhook |
-| `CERTIFICATE_PRICE_PAISE` | optional, defaults to `29900` (₹299) |
+| `CERTIFICATE_PRICE_PAISE` | optional, defaults to `299900` (₹2999) |
 
 `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` are already
 provided by the stack.

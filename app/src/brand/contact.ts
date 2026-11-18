@@ -2,7 +2,7 @@
  * The one place the support address is written down.
  *
  * It was previously hardcoded as `support@aarogya.in` on the payment-failure and
- * refund pages — a domain Aarogya India does not use, so a candidate whose ₹299
+ * refund pages — a domain Aarogya India does not use, so a candidate whose
  * payment failed was being sent to an address that bounces. Defining it once
  * means the next change is one edit, not a grep.
  */

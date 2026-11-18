@@ -82,8 +82,19 @@ export const LEGAL = {
    */
   jurisdiction: 'Gautam Buddh Nagar, Uttar Pradesh',
 
-  /** Certificate price in rupees, matching CERTIFICATE_PRICE_PAISE on the server. */
-  certificatePriceInr: 299,
+  /**
+   * Certificate price in rupees.
+   *
+   * This is the published figure, and it must match CERTIFICATE_PRICE_PAISE on
+   * the server — the edge function charges that, not this. Publishing one
+   * price and charging another is a mis-selling problem, not a typo, so
+   * legal.test.ts asserts the two agree.
+   *
+   * Changing it here is not enough on its own: if CERTIFICATE_PRICE_PAISE is
+   * set explicitly in Coolify it overrides the function's default, so update
+   * it there too.
+   */
+  certificatePriceInr: 2999,
 
   /** Last review date shown on the policies. Update when you change them. */
   lastUpdated: '18 November 2026',

@@ -5,6 +5,7 @@ import { useAsync } from '../hooks/useAsync';
 import { useLanguage } from '../hooks/useLanguage';
 import { verifyPageQrDataUrl } from '../modules/certificate/qr';
 import { Logo } from '../brand/Logo';
+import { LEGAL } from '../brand/legal';
 import type { Language } from '../types';
 
 /**
@@ -22,7 +23,16 @@ import type { Language } from '../types';
  * concatenating fragments would produce broken grammar.
  */
 const SLUG = 'panchkarma-therapy';
-const CERTIFICATE_PRICE = '₹299';
+
+/**
+ * Derived, never written out here.
+ *
+ * This used to be its own literal, which meant the sales page could advertise
+ * one price while the policy pages and the server quoted another. A landing
+ * page promising a lower figure than the checkout charges is the worst place
+ * for that drift to live, so there is one source of truth.
+ */
+const CERTIFICATE_PRICE = `₹${LEGAL.certificatePriceInr}`;
 
 const FACTS = { minutes: 7, questions: 10, passScorePct: 60 };
 

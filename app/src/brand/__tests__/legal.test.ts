@@ -34,10 +34,10 @@ describe('legal details', () => {
   });
 
   it('states a price that matches the server default', () => {
-    // CERTIFICATE_PRICE_PAISE defaults to 29900 in the edge function. If the
+    // CERTIFICATE_PRICE_PAISE defaults to 299900 in the edge function. If the
     // published price and the charged price diverge, that is a mis-selling
     // problem, not a typo.
-    expect(LEGAL.certificatePriceInr * 100).toBe(29900);
+    expect(LEGAL.certificatePriceInr * 100).toBe(299900);
   });
 
   it('keeps the trading name in step with the brand', () => {

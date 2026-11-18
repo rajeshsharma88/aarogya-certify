@@ -170,8 +170,11 @@ export function detectSuspiciousActivity(
     };
   }
 
-  // High total amount in 24h
-  if (totalInLast24h > 100000) { // ₹1000
+  // High total amount in 24h.
+  // Was ₹1,000, set when a certificate cost ₹299. At ₹2,999 a single ordinary
+  // purchase would have tripped it, flagging every paying candidate as
+  // suspicious. Set to roughly three certificates.
+  if (totalInLast24h > 1000000) { // ₹10,000
     return {
       userId,
       reason: 'High transaction volume in 24 hours',

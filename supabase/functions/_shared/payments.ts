@@ -36,7 +36,8 @@ export function supabaseUrl(): string {
  * a client-supplied amount lets anyone buy a certificate for one paisa.
  */
 export function certificatePricePaise(): number {
-  const raw = Deno.env.get('CERTIFICATE_PRICE_PAISE') ?? '29900';
+  // 299900 paise = ₹2999. Must match LEGAL.certificatePriceInr in the app.
+  const raw = Deno.env.get('CERTIFICATE_PRICE_PAISE') ?? '299900';
   const n = Number.parseInt(raw, 10);
   if (!Number.isFinite(n) || n <= 0) throw new Error(`Invalid CERTIFICATE_PRICE_PAISE: ${raw}`);
   return n;
