@@ -22,5 +22,19 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  /*
+   * Tests are excluded from the production type-check.
+   *
+   * The Docker build context is this directory, so `supabase/` is not present
+   * inside the image. signature.test.ts deliberately imports the edge
+   * function's signature module from there — so that the code deciding
+   * whether a payment is genuine is the code under test rather than a copy
+   * that can drift — and that import cannot resolve during the container
+   * build. Including tests here failed the deploy while passing locally.
+   *
+   * Tests are still type-aware when vitest runs them; they are simply not a
+   * dependency of shipping the app.
+   */
+  "exclude": ["src/**/__tests__/**", "src/**/*.test.ts", "src/**/*.test.tsx", "src/test"]
 }
