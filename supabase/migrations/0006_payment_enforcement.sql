@@ -28,14 +28,25 @@ update certificates
 -- The edge function sets the price from server configuration. The function is
 -- left in place for administrative use rather than dropped, so an operator can
 -- still record an offline payment.
-revoke execute on function create_payment_order(uuid, int, text) from anon, authenticated;
+-- Revoking from anon and authenticated is NOT enough, and this migration got
+-- that wrong at first. Postgres grants EXECUTE on every new function to PUBLIC
+-- by default, and both roles inherit it, so the ACL still read
+--
+--   =X/postgres postgres=X/postgres service_role=X/postgres
+--
+-- and anon could still call it. The leading "=X" is the PUBLIC grant. Only
+-- revoking from public actually closes the path; the explicit service_role
+-- grant then keeps it reachable from the edge functions.
+revoke execute on function create_payment_order(uuid, int, text) from public, anon, authenticated;
+grant execute on function create_payment_order(uuid, int, text) to service_role;
 
 -- 3. complete_payment already requires is_admin(), and it does not verify the
 -- Razorpay signature — it only stores it. That is acceptable for an admin
 -- recording a payment by hand, and it is not reachable by candidates, but it
 -- must never become the normal path. Verification belongs in razorpay-verify
 -- and razorpay-webhook, which hold the key secret.
-revoke execute on function complete_payment(uuid, varchar, varchar) from anon, authenticated;
+revoke execute on function complete_payment(uuid, varchar, varchar) from public, anon, authenticated;
+grant execute on function complete_payment(uuid, varchar, varchar) to service_role;
 
 comment on function complete_payment(uuid, varchar, varchar) is
   'Administrative override only: records a payment WITHOUT verifying the Razorpay signature. '
@@ -53,3 +64,13 @@ commit;
 --          count(*) filter (where not is_paid) as unpaid
 --     from certificates;
 -- Expect unpaid = 0 immediately after running this.
+--
+--   select p.proname, array_to_string(p.proacl, ' ')
+--     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+--    where n.nspname = 'public'
+--      and p.proname in ('create_payment_order', 'complete_payment');
+-- Expect "postgres=X/postgres service_role=X/postgres" and NO bare "=X/..."
+-- entry — that leading one is PUBLIC, and it is what let anon through.
+--
+-- Grant changes are invisible to PostgREST until its cache is refreshed:
+--   notify pgrst, 'reload schema';
