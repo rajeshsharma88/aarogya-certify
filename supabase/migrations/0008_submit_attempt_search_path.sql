@@ -1,0 +1,40 @@
+-- Let submit_attempt see pgcrypto.
+--
+-- Submitting a passing attempt failed with
+--
+--   {"code":"42883","message":"function gen_random_bytes(integer) does not exist"}
+--
+-- submit_attempt issues the certificate, and it builds both the certificate
+-- number and the verification token from gen_random_bytes(), which comes from
+-- pgcrypto. The function is declared `security definer set search_path =
+-- public`, which is correct practice — a definer function with an unpinned
+-- search path is an injection risk — but it also means the function can only
+-- see schemas on that list.
+--
+-- 0001 opens with `create extension if not exists pgcrypto`. On a bare
+-- Postgres that installs it into public and everything resolves. On Supabase
+-- it does nothing at all, because the platform has already installed pgcrypto
+-- into the dedicated `extensions` schema, so "if not exists" is satisfied and
+-- gen_random_bytes stays somewhere submit_attempt cannot see.
+--
+-- Hence this is a Supabase-only failure that a local Postgres will never
+-- reproduce. Adding `extensions` to the search path fixes it there and is a
+-- harmless no-op where pgcrypto lives in public.
+--
+-- Note the failure mode: submit_attempt only touches gen_random_bytes inside
+-- `if v_passed then`. Candidates who failed could submit normally. Only the
+-- ones who PASSED hit the error — and since PostgREST runs the call in a
+-- transaction, the whole submission rolled back, so they got no result, no
+-- score and no certificate, while the attempt stayed in_progress.
+
+alter function public.submit_attempt(uuid) set search_path = public, extensions;
+
+-- Verify:
+--   select proname, proconfig
+--     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+--    where n.nspname = 'public' and proname = 'submit_attempt';
+-- Expect proconfig = {"search_path=public, extensions"}.
+--
+-- gen_random_bytes is the only pgcrypto function this schema uses; everything
+-- else relies on gen_random_uuid(), which has been in core since Postgres 13
+-- and resolves from pg_catalog whatever the search path.
